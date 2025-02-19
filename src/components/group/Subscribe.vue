@@ -230,6 +230,10 @@ const userTokenRefresh: Ref<number> = ref(0)
 let userTokenRefreshTimeout: ReturnType<typeof setTimeout> | null = null
 const qrCodeDialog: Ref<boolean> = ref(false)
 
+/**
+ * 复制文本
+ * @param text 文本
+ */
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text)
@@ -241,6 +245,12 @@ async function copy(text: string) {
   }
 }
 
+/**
+ * 生成快速导入链接
+ * @param type 类型
+ * @param url 链接
+ * @param name 名称
+ */
 function createImportScheme(
   type: "clash" | "surfboard" | "surge" | "singbox" | "quantumultx",
   url: string | undefined,
@@ -265,6 +275,7 @@ function createImportScheme(
   }
 }
 
+/** 生成转换后的链接 */
 function generateUrl(): URL {
   const url = new URL(`${window.location.protocol}//${window.location.host}`)
   url.pathname = '/api/subscribe'
@@ -285,6 +296,7 @@ function generateUrl(): URL {
   return url
 }
 
+/** 显示原始链接 */
 function switchOriginal(open: boolean) {
   console.log(`显示原始订阅链接${open}`)
   switch (open) {
@@ -300,6 +312,11 @@ function switchOriginal(open: boolean) {
   }
 }
 
+/**
+ * 存储自定义转换选项
+ * @param key 键
+ * @param value 值
+ */
 function updateConverterOption<Key extends keyof ConverterOptions>(
   key: Key,
   value: ConverterOptions[Key]
@@ -310,6 +327,7 @@ function updateConverterOption<Key extends keyof ConverterOptions>(
   convertedUrl.value.url = generateUrl().toString()
 }
 
+/** 生成服务器强制转换选项的消息 */
 function alertServerConverterOption(): string {
   const entries = Object.entries(props.converter_options)
   if (entries.length === 0) {
@@ -320,6 +338,7 @@ function alertServerConverterOption(): string {
     .join(", ")
 }
 
+/** 刷新令牌 */
 async function refreshToken() {
   if (userTokenRefreshTimeout) {
     clearTimeout(userTokenRefreshTimeout)
@@ -365,6 +384,7 @@ async function refreshToken() {
   }
 }
 
+/** 如果订阅开启了转换 */
 if (props.converter) {
   if (!convertedUrlsStore.$state[props.sid])
     convertedUrlsStore.$state[props.sid] = defaultConverterOptions
@@ -372,6 +392,7 @@ if (props.converter) {
   convertedUrl.value.url = generateUrl().toString()
 }
 
+/** Mount 后获取数据。防止数据倒转。 */
 onMounted(async () => {
   if (props.converter) {
     try {

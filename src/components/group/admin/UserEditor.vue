@@ -137,6 +137,7 @@ interface AddUserDialog {
 const route = useRoute()
 const gid = route.query.gid
 const notifyerStore = useNotifyerStore()
+/** 用户表格内容 */
 const table = ref({
   page: 1,
   itemValue: "ugid",
@@ -147,11 +148,13 @@ const table = ref({
   ],
   loading: true
 })
+/** 用户表格交互 */
 const items: Ref<Items> = ref({
   table: [],
   selected: [],
   length: 0
 })
+/** 新建用户 */
 const addUserDialog: Ref<AddUserDialog> = ref({
   open: false,
   uid: "",
@@ -162,7 +165,10 @@ const addUserDialog: Ref<AddUserDialog> = ref({
   }
 })
 
-
+/**
+ * 获取分组用户
+ * @param param0 表格的参数
+ */
 async function fetchUserGroups(
   { page, itemsPerPage, sortBy }: { page: number, itemsPerPage: number, sortBy: Sort[] }
 ) {
@@ -195,6 +201,10 @@ async function fetchUserGroups(
   }
 }
 
+/**
+ * 获取用户名
+ * @param uid 用户 ID
+ */
 async function fetchUserName(uid: string) {
   try {
     const response = await axios.get<ReturnResult<Users>>(`/api/v2/admin/users?gid=${gid}&uid=${uid}&limit=1&offset=0`)
@@ -213,6 +223,10 @@ async function fetchUserName(uid: string) {
   }
 }
 
+/**
+ * 搜索用户的用户 ID
+ * @param like 搜索字段
+ */
 async function searchUid(like: string) {
   if (!like)
     return []
@@ -236,11 +250,13 @@ async function searchUid(like: string) {
   return []
 }
 
+/** 删除确认 */
 function delete_confirm() {
   notifyerStore.message = "请双击来确认删除。"
   notifyerStore.open = true
 }
 
+/** 删除分组用户 */
 async function delete_ug() {
   items.value.selected.forEach(async (value) => {
     await axios.delete<ReturnMessage>(`/api/v2/admin/group/users?where_gid=${gid}&where_ugid=${value}`)
@@ -263,6 +279,7 @@ async function delete_ug() {
   await fetchUserGroups({ page: table.value.page, itemsPerPage: table.value.itemsPerPage, sortBy: [] })
 }
 
+/** 提交分组用户 */
 async function submit() {
   const data = items.value.table.map(userGroup => ({
     where_ugid: userGroup.ugid,
@@ -286,6 +303,7 @@ async function submit() {
   notifyerStore.open = true
 }
 
+/** 创建分组用户 */
 async function create() {
   const data = [{
     uid: addUserDialog.value.uid,
@@ -320,13 +338,17 @@ async function create() {
   await fetchUserGroups({ page: table.value.page, itemsPerPage: table.value.itemsPerPage, sortBy: [] })
 }
 
+/** 处理搜索用户 ID */
 async function handleUidSearch() {
   const result = await searchUid(addUserDialog.value.uid)
   addUserDialog.value.searchResult.result = result
   addUserDialog.value.searchResult.display = result.map(user => user.uid)
-  console.log(addUserDialog.value.searchResult)
 }
 
+/**
+ * 通过用户 ID 获取用户名
+ * @param uid 用户 ID
+ */
 function uidToUserName(uid: string): string | undefined {
   const user = addUserDialog.value.searchResult.result.find(user => user.uid === uid)
   return user ? user.username : undefined

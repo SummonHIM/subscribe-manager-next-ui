@@ -5,6 +5,7 @@ interface NotifyerState {
     message: string
 }
 
+/** 通知存储 */
 export const useNotifyerStore = defineStore('theme', {
     state: (): NotifyerState => ({
         open: false,

@@ -53,7 +53,10 @@
 import type { GroupShare } from '@/interfaces';
 import { useNotifyerStore } from '@/stores/notifyer';
 
+/** 传入的参数 */
 type Props = GroupShare
+
+/** 实际显示的内容 */
 interface Display extends GroupShare {
   show_password: boolean
 }
@@ -65,6 +68,10 @@ const display: Ref<Display> = ref({
   show_password: false
 })
 
+/**
+ * 复制文本
+ * @param text 文本
+ */
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text)
@@ -76,6 +83,7 @@ async function copy(text: string) {
   }
 }
 
+/** 新建标签页打开 */
 function openURLatBlank (url: string) {
   // 检查 URL 是否以 http:// 或 https:// 开头
   if (!/^https?:\/\//i.test(url)) {

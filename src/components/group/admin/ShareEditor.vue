@@ -91,7 +91,9 @@ import type { GroupShare, ReturnMessage } from '@/interfaces'
 import { useNotifyerStore } from '@/stores/notifyer'
 import axios, { AxiosError } from 'axios'
 
+/** 传入的参数 */
 type Props = GroupShare
+/** 实际显示的数据 */
 interface Display extends Props {
   create_date_string: string
 }
@@ -105,8 +107,11 @@ const display: Ref<Display> = ref({
   aff: props.aff || "",
   create_date_string: props.create_date.toLocaleString()
 })
+/** 已删除？ */
 const deleted: Ref<boolean> = ref(false)
+/** 禁用提交按钮 */
 const disableSubmitBtn: Ref<boolean> = ref(false)
+/** 表单规则 */
 const rules = {
   nameRules: [
     (value: string) => {
@@ -160,6 +165,7 @@ const rules = {
   ]
 }
 
+/** 提交数据 */
 async function submit() {
   const data = [{
     where_gsid: display.value.gsid,
@@ -185,11 +191,13 @@ async function submit() {
   notifyerStore.open = true
 }
 
+/** 删除确认 */
 function delete_confirm() {
   notifyerStore.message="请双击来确认删除。"
   notifyerStore.open=true
 }
 
+/** 删除数据 */
 async function delete_share() {
   await axios.delete<ReturnMessage>(`/api/v2/admin/group/share?where_gsid=${display.value.gsid}&where_gid=${gid}`)
     .then(response => {
@@ -218,6 +226,8 @@ async function delete_share() {
   notifyerStore.open = true
 }
 
+
+/** 重置数据到编辑状态前 */
 function reset() {
   display.value = {
     ...props,

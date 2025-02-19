@@ -1,5 +1,8 @@
 import type { ConverterOptions, ConverterForm } from "@/interfaces"
 
+/**
+ * 图形化转换选项的数据
+ */
 export const converterForm: ConverterForm = {
     订阅配置: {
         config: { label: '外部配置', type: 'text', tooltip: '指外部配置的地址（包含分组和规则部分），当此参数不存在时使用订阅转换器中的配置文件。', cols: 12 },

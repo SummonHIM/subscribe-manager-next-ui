@@ -11,10 +11,10 @@
       <v-container class="pt-12 pb-12 mb-4">
         <div class="d-flex align-center justify-space-between">
           <div>
-            <h1>{{ group.name }}</h1>
-            <p>{{ userGroup.expire.toLocaleString() }} 过期</p>
+            <h1>{{ groupInfo.group.name }}</h1>
+            <p>{{ groupInfo.userGroup.expire.toLocaleString() }} 过期</p>
           </div>
-          <div v-if="userGroup.admin">
+          <div v-if="groupInfo.userGroup.admin">
             <v-btn
               class="mr-4"
               @click="switchEditorMode"
@@ -46,7 +46,7 @@
                 @click="showSheet('share')"
               />
               <v-list-item
-                v-if="userGroup.admin && editorMode"
+                v-if="groupInfo.userGroup.admin && editorMode"
                 link
                 title="用户"
                 :variant="currentSheet === 'user' ? 'tonal' : 'flat'"
@@ -75,10 +75,10 @@
                   添加
                 </v-btn>
 
-                <div v-if="subscribes.length > 0">
+                <div v-if="groupSubscribesInfo.subscribes.length > 0">
                   <div v-if="editorMode">
                     <SubscribeEditor
-                      v-for="res in subscribes"
+                      v-for="res in groupSubscribesInfo.subscribes"
                       :key="res.sid"
                       :sid="res.sid"
                       :gid="res.gid"
@@ -92,7 +92,7 @@
                   </div>
                   <div v-else>
                     <Subscribe
-                      v-for="res in subscribes"
+                      v-for="res in groupSubscribesInfo.subscribes"
                       :key="res.sid"
                       :sid="res.sid"
                       :gid="res.gid"
@@ -111,8 +111,8 @@
                   </v-alert>
                 </div>
                 <v-pagination
-                  v-model="subscribePages"
-                  :length="Math.ceil(subscribeCount / 5)"
+                  v-model="groupSubscribesInfo.pages"
+                  :length="Math.ceil(groupSubscribesInfo.count / 5)"
                   :total-visible="paginationTotalVisible"
                 />
               </v-container>
@@ -125,10 +125,10 @@
                 >
                   添加
                 </v-btn>
-                <div v-if="share.length > 0">
+                <div v-if="groupShareInfo.share.length > 0">
                   <div v-if="editorMode">
                     <ShareEditor
-                      v-for="res in share"
+                      v-for="res in groupShareInfo.share"
                       :key="res.gsid"
                       :gsid="res.gsid"
                       :gid="res.gid"
@@ -143,7 +143,7 @@
                   </div>
                   <div v-else>
                     <Share
-                      v-for="res in share"
+                      v-for="res in groupShareInfo.share"
                       :key="res.gsid"
                       :gsid="res.gsid"
                       :gid="res.gid"
@@ -163,8 +163,8 @@
                   </v-alert>
                 </div>
                 <v-pagination
-                  v-model="sharePages"
-                  :length="Math.ceil(shareCount / 5)"
+                  v-model="groupShareInfo.pages"
+                  :length="Math.ceil(groupShareInfo.count / 5)"
                   :total-visible="paginationTotalVisible"
                 />
               </v-container>
@@ -188,22 +188,53 @@ import favicon from '@/assets/favicon.png'
 import { useNotifyerStore } from '@/stores/notifyer'
 import type { Groups, GroupShare, GroupSubscribes, ReturnMessage, ReturnResult, UserGroups } from '@/interfaces'
 
+/** 分组信息 */
+interface GroupInfo {
+  gid: string
+  group: Groups
+  userGroup: UserGroups
+}
+
+/** 分组订阅信息 */
+interface GroupSubscribesInfo {
+  subscribes: GroupSubscribes[]
+  count: number
+  pages: number
+}
+
+/** 分组共享账号信息 */
+interface GroupShareInfo {
+  share: GroupShare[]
+  count: number
+  pages: number
+}
+
 const route = useRoute()
-const { name } = useDisplay()
 const appTheme = useTheme()
+const { name } = useDisplay()
 const notifyerStore = useNotifyerStore()
-const gid = route.query.gid
+const groupInfo: Ref<GroupInfo> = ref({
+  gid: route.query.gid?.toString() || "",
+  group: { gid: "", name: "", create_date: new Date() },
+  userGroup: { ugid: "", uid: "", gid: "", expire: new Date(), admin: false }
+})
+const groupSubscribesInfo: Ref<GroupSubscribesInfo> = ref({
+  subscribes: [],
+  count: 0,
+  pages: 1
+})
+const groupShareInfo: Ref<GroupShareInfo> = ref({
+  share: [],
+  count: 0,
+  pages: 1
+})
+/** 分组未找到？ */
 const notFound: Ref<boolean> = ref(false)
-const currentSheet: Ref<"subscribes" | "share" | "user"> = ref("subscribes")
-const group: Ref<Groups> = ref({ gid: "", name: "", create_date: new Date() })
-const userGroup: Ref<UserGroups> = ref({ ugid: "", uid: "", gid: "", expire: new Date(), admin: false })
-const subscribes: Ref<GroupSubscribes[]> = ref([])
-const subscribeCount: Ref<number> = ref(0)
-const subscribePages: Ref<number> = ref(1)
-const share: Ref<GroupShare[]> = ref([])
-const shareCount: Ref<number> = ref(0)
-const sharePages: Ref<number> = ref(1)
+/** 编辑模式 */
 const editorMode: Ref<boolean> = ref(false)
+/** 当前页面 */
+const currentSheet: Ref<"subscribes" | "share" | "user"> = ref("subscribes")
+/** 动态分页数量 */
 const paginationTotalVisible = computed(() => {
   switch (name.value) {
     case 'xs': return 1
@@ -211,17 +242,23 @@ const paginationTotalVisible = computed(() => {
   }
 })
 
-
+/**
+ * 切换页面
+ * @param sheet 页面
+ */
 function showSheet(sheet: "subscribes" | "share" | "user") {
   currentSheet.value = sheet
 }
 
+/**
+ * 获取订阅
+ */
 async function fetchSubscribes() {
   try {
-    const response = await axios.get<ReturnResult<GroupSubscribes>>(`/api/v2/group/subscribes?where_gid=${gid}&offset=${((subscribePages.value - 1) * 5)}`)
+    const response = await axios.get<ReturnResult<GroupSubscribes>>(`/api/v2/group/subscribes?where_gid=${groupInfo.value.gid}&offset=${((groupSubscribesInfo.value.pages - 1) * 5)}`)
     if (response.data.status === 200) {
-      subscribes.value = response.data.result
-      subscribeCount.value = response.data.count
+      groupSubscribesInfo.value.subscribes = response.data.result
+      groupSubscribesInfo.value.count = response.data.count
     }
   } catch (error) {
     const axiosError = error as AxiosError<ReturnMessage>
@@ -235,15 +272,18 @@ async function fetchSubscribes() {
   }
 }
 
+/**
+ * 获取共享账号
+ */
 async function fetchShare() {
   try {
-    const response = await axios.get<ReturnResult<GroupShare>>(`/api/v2/group/share?where_gid=${gid}&offset=${((sharePages.value - 1) * 5)}`)
+    const response = await axios.get<ReturnResult<GroupShare>>(`/api/v2/group/share?where_gid=${groupInfo.value.gid}&offset=${((groupShareInfo.value.pages - 1) * 5)}`)
     if (response.data.status === 200) {
-      share.value = response.data.result.map(share => ({
+      groupShareInfo.value.share = response.data.result.map(share => ({
         ...share,
         create_date: new Date(share.create_date)
       }))
-      shareCount.value = response.data.count
+      groupShareInfo.value.count = response.data.count
     }
   } catch (error) {
     const axiosError = error as AxiosError<ReturnMessage>
@@ -257,6 +297,9 @@ async function fetchShare() {
   }
 }
 
+/**
+ * 创建新订阅
+ */
 async function createSubscribe() {
   const data = [{
     order: 255,
@@ -265,7 +308,7 @@ async function createSubscribe() {
     converter: true
   }]
 
-  await axios.post<ReturnMessage>(`/api/v2/admin/group/subscribes?where_gid=${gid}`, data)
+  await axios.post<ReturnMessage>(`/api/v2/admin/group/subscribes?where_gid=${groupInfo.value.gid}`, data)
     .then(response => {
       notifyerStore.message = response.data.message
     })
@@ -283,6 +326,9 @@ async function createSubscribe() {
   await fetchSubscribes()
 }
 
+/**
+ * 创建新共享账号
+ */
 async function createShare() {
   const data = [{
     name: "新共享账号",
@@ -292,7 +338,7 @@ async function createShare() {
     aff: ""
   }]
 
-  await axios.post<ReturnMessage>(`/api/v2/admin/group/share?where_gid=${gid}`, data)
+  await axios.post<ReturnMessage>(`/api/v2/admin/group/share?where_gid=${groupInfo.value.gid}`, data)
     .then(response => {
       notifyerStore.message = response.data.message
     })
@@ -310,6 +356,9 @@ async function createShare() {
   await fetchShare()
 }
 
+/**
+ * 切换编辑模式
+ */
 async function switchEditorMode() {
   await fetchSubscribes()
   await fetchShare()
@@ -319,28 +368,31 @@ async function switchEditorMode() {
   editorMode.value = !editorMode.value
 }
 
-watch(subscribePages, (newPage, oldPage) => {
+/** 监听订阅页面翻页 */
+watch(() => groupSubscribesInfo.value.pages, (newPage, oldPage) => {
   if (newPage !== oldPage) {
     fetchSubscribes()
   }
 })
 
-watch(sharePages, (newPage, oldPage) => {
+/** 监听共享账号页面翻页 */
+watch(() => groupShareInfo.value.pages, (newPage, oldPage) => {
   if (newPage !== oldPage) {
     fetchShare()
   }
 })
 
+/** 初始化基础信息 */
 try {
-  const respGroup = await axios.get<ReturnResult<Groups>>(`/api/v2/group?where_gid=${gid}`)
-  const respUserGroup = await axios.get<ReturnResult<UserGroups>>(`/api/v2/user/groups?where_gid=${gid}`)
+  const respGroup = await axios.get<ReturnResult<Groups>>(`/api/v2/group?where_gid=${groupInfo.value.gid}`)
+  const respUserGroup = await axios.get<ReturnResult<UserGroups>>(`/api/v2/user/groups?where_gid=${groupInfo.value.gid}`)
 
   if (respGroup.data.status === 200) {
-    group.value = respGroup.data.result[0]
+    groupInfo.value.group = respGroup.data.result[0]
   }
 
   if (respUserGroup.data.status === 200) {
-    userGroup.value = respUserGroup.data.result.map(userGroup => ({
+    groupInfo.value.userGroup = respUserGroup.data.result.map(userGroup => ({
       ...userGroup,
       expire: new Date(userGroup.expire)
     }))[0]

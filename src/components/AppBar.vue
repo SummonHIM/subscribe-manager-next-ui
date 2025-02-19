@@ -94,6 +94,10 @@ const links = {
   },
 }
 
+/**
+ * 设置主题
+ * @param theme 主题
+ */
 function setTheme(theme: "auto" | "light" | "dark") {
   themeStore.theme = theme
 

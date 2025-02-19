@@ -61,12 +61,21 @@ const paginationTotalVisible = computed(() => {
   }
 })
 
+/**
+ * 检查是否已经过期
+ * @param expire 过期日
+ * @param admin 是否是管理员
+ */
 function isExpired(expire: Date, admin: boolean = false): boolean {
   if (admin) return false
   const now = new Date()
   return now.getTime() > expire.getTime()
 }
 
+/**
+ * 获取分组名称
+ * @param gid 分组 ID
+ */
 async function getGroupName(gid: UserGroups["gid"]): Promise<string> {
   try {
     const response = await axios.get<ReturnResult<Groups>>(`/api/v2/group?where_gid=${gid}`)
@@ -89,6 +98,9 @@ async function getGroupName(gid: UserGroups["gid"]): Promise<string> {
   return "获取失败…"
 }
 
+/**
+ * 获取用户分组
+ */
 async function fetchUserGroups() {
   try {
     const response = await axios.get<ReturnResult<UserGroups>>(`/api/v2/user/groups?offset=${((pages.value - 1) * 10)}`)
@@ -120,7 +132,6 @@ async function fetchUserGroups() {
 }
 
 await fetchUserGroups()
-
 
 watch(pages, (newPage, oldPage) => {
   if (newPage !== oldPage) {

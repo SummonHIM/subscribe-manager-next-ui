@@ -176,12 +176,15 @@ import { useNotifyerStore } from '@/stores/notifyer'
 import { converterForm, defaultConverterOptions } from "@/plugins/converter"
 import type { ConverterOptions, GroupSubscribes, ReturnMessage } from "@/interfaces"
 
+/** 传入的参数 */
 type Props = GroupSubscribes
 
 const route = useRoute()
 const gid = route.query.gid
 const notifyerStore = useNotifyerStore()
+/** 传入的参数 */
 const props = defineProps<Props>()
+/** 实际显示的内容 */
 const display: Ref<Props> = ref({
   ...props,
   converter_options: {
@@ -189,8 +192,11 @@ const display: Ref<Props> = ref({
     ...props.converter_options
   }
 })
+/** 已删除？ */
 const deleted: Ref<boolean> = ref(false)
+/** 禁用提交按钮 */
 const disableSubmitBtn: Ref<boolean> = ref(false)
+/** 表单规则 */
 const rules = {
   orderRules: [
     (value: number) => {
@@ -224,6 +230,7 @@ const rules = {
   ]
 }
 
+/** 提交数据 */
 async function submit() {
   const data = [{
     where_sid: display.value.sid,
@@ -255,11 +262,13 @@ async function submit() {
   notifyerStore.open = true
 }
 
+/** 确认删除 */
 function delete_confirm() {
   notifyerStore.message="请双击来确认删除。"
   notifyerStore.open=true
 }
 
+/** 删除订阅 */
 async function delete_subscribe() {
   await axios.delete<ReturnMessage>(`/api/v2/admin/group/subscribes?where_sid=${display.value.sid}&where_gid=${gid}`)
     .then(response => {
@@ -286,6 +295,7 @@ async function delete_subscribe() {
   notifyerStore.open = true
 }
 
+/** 重置数据到编辑状态前 */
 function reset() {
   display.value = { ...props }
 }

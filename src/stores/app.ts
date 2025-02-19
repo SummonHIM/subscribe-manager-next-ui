@@ -3,6 +3,9 @@ import { defineStore } from 'pinia'
 import axios, { AxiosError } from 'axios'
 import type { ReturnResult, Users } from '@/interfaces'
 
+/**
+ * 用户信息（全局 APP）存储
+ */
 export const useAppStore = defineStore('app', {
   state: () => ({
     loggedIn: false,
