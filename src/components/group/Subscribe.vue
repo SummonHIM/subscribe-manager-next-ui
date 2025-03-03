@@ -25,23 +25,18 @@
             <v-menu activator="parent">
               <v-list>
                 <div v-if="props.converter && !convertedUrl.showOriginal">
-                  <v-list-item :href="createImportScheme('clash', convertedUrl.url.toString(), props.name)">
-                    Clash
-                  </v-list-item>
-                  <v-list-item :href="createImportScheme('surge', convertedUrl.url.toString(), props.name)">
-                    Surge
-                  </v-list-item>
-                  <v-list-item :href="createImportScheme('singbox', convertedUrl.url.toString(), props.name)">
-                    sing-box
-                  </v-list-item>
-                  <v-list-item :href="createImportScheme('quantumultx', convertedUrl.url.toString(), props.name)">
-                    Quantumult X
+                  <v-list-item
+                    v-for="item in importSchemes"
+                    :key="item.value"
+                    :href="createImportScheme(item.value, convertedUrl.url.toString(), props.name)"
+                  >
+                    {{ item.title }}
                   </v-list-item>
                 </div>
                 <v-list-item @click="copy(convertedUrl.url.toString() || '')">
                   剪切板
                 </v-list-item>
-                <v-list-item @click="qrCodeDialog = true">
+                <v-list-item @click="qrCodeDialog.open = true">
                   二维码
                 </v-list-item>
               </v-list>
@@ -166,17 +161,28 @@
   </v-card>
 
   <v-dialog
-    v-model="qrCodeDialog"
+    v-model="qrCodeDialog.open"
     max-width="335"
   >
     <v-card
       prepend-icon="mdi-qrcode"
       title="二维码"
     >
-      <v-container class="bg-white">
+      <v-container>
+        <v-select
+          v-model="qrCodeDialog.link_type"
+          label="请选择客户端类型…"
+          :items="importSchemes"
+          item-title="title"
+          item-value="value"
+          variant="outlined"
+        />
+      </v-container>
+
+      <v-container class="bg-white mt-n6">
         <qrcode-vue
           class="d-flex align-center justify-center"
-          :value="convertedUrl.url"
+          :value="createImportScheme(qrCodeDialog.link_type, convertedUrl.url.toString(), props.name)"
           :size="300"
           level="H"
         />
@@ -184,7 +190,7 @@
       <template #actions>
         <v-btn
           text="返回"
-          @click="qrCodeDialog = false"
+          @click="qrCodeDialog.open = false"
         />
       </template>
     </v-card>
@@ -213,6 +219,16 @@ interface ConvertedUrl {
   converterOption: ConverterOptions
 }
 
+interface ImportSchemes {
+  title: string
+  value: string
+}
+
+interface QRCodeDialog {
+  open: boolean
+  link_type: string
+}
+
 const notifyerStore = useNotifyerStore()
 const convertedUrlsStore = useConvertedUrlsStore()
 const props = defineProps<Props>()
@@ -228,7 +244,17 @@ const userToken: Ref<UserToken> = ref({
 })
 const userTokenRefresh: Ref<number> = ref(0)
 let userTokenRefreshTimeout: ReturnType<typeof setTimeout> | null = null
-const qrCodeDialog: Ref<boolean> = ref(false)
+const importSchemes: Ref<ImportSchemes[]> = ref([
+  { title: 'Clash', value: 'clash' },
+  { title: 'Surfboard', value: 'surfboard' },
+  { title: 'Surge', value: 'surge' },
+  { title: 'sing-box', value: 'singbox' },
+  { title: 'Quantumult X', value: 'quantumultx' },
+])
+const qrCodeDialog: Ref<QRCodeDialog> = ref({
+  open: false,
+  link_type: 'clash'
+})
 
 /**
  * 复制文本
@@ -252,7 +278,7 @@ async function copy(text: string) {
  * @param name 名称
  */
 function createImportScheme(
-  type: "clash" | "surfboard" | "surge" | "singbox" | "quantumultx",
+  type: string,
   url: string | undefined,
   name: string | undefined
 ) {
