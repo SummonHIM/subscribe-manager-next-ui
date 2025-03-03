@@ -20,6 +20,7 @@
       <template #item.expire="{ item }">
         <v-text-field
           v-model="item.expire_string"
+          style="min-width: 160px;"
           hide-details
           label="请输入过期日"
           variant="underlined"
