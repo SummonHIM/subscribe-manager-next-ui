@@ -1,3 +1,15 @@
+test_build:
+  stage: build
+  image: node:lts
+  script:
+    - corepack enable
+    - yarn install
+    - yarn build
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 mos
+
 release_build:
   stage: build
   image: node:lts
