@@ -33,6 +33,11 @@ jobs:
               run: yarn build
             - name: Compress built files
               run: tar -cJvf dist.tar.xz --use-compress-program="xz -9" dist
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: dist
+                path: dist
             - name: Publish new release
               if: startsWith(github.ref, 'refs/tags/')
               uses: softprops/action-gh-release@v2
