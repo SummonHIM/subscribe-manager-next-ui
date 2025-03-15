@@ -28,9 +28,9 @@ jobs:
                   node-version: ${{ matrix.node-version }}
                   cache: "npm"
             - name: Install node modules
-              run: npm ci
+              run: yarn install --frozen-lockfile
             - name: Build node project
-              run: npm run build --if-present
+              run: yarn build
             - name: Publish new release
               if: startsWith(github.ref, 'refs/tags/')
               uses: softprops/action-gh-release@v2
