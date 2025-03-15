@@ -13,12 +13,12 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
-
+        permissions:
+            contents: write
         strategy:
             matrix:
-                node-version: [ lts/jod ]
+                node-version: [lts/jod]
                 # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
