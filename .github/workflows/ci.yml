@@ -32,7 +32,7 @@ jobs:
             - name: Build node project
               run: yarn build
             - name: Compress built files
-              run: tar -cJvf dist.tar.xz --use-compress-program="xz -9" dist
+              run: tar -cJvf dist.tar.xz dist
             - name: Upload artifacts
               uses: actions/upload-artifact@v4
               with:
