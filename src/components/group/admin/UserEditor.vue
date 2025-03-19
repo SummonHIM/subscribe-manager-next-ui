@@ -156,7 +156,7 @@ const userAddForm: Ref<userAddForm> = ref({
  * 获取用户名
  * @param uid 用户 ID
  */
- async function fetchUserName(uid: string) {
+async function fetchUserName(uid: string) {
   try {
     const response = await axios.get<ReturnResult<Users>>(`/api/v2/admin/users?gid=${gid}&uid=${uid}&limit=1&offset=0`)
     if (response.data.status === 200) {
@@ -300,7 +300,7 @@ async function create() {
  * 搜索用户的用户 ID
  * @param like 搜索字段
  */
- async function searchUid(like: string | null) {
+async function searchUid(like: string | null) {
   if (!like)
     return []
 

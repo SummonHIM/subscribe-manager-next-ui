@@ -2,6 +2,7 @@
   <v-card v-bind="$attrs">
     <v-container>
       <v-form
+        v-model="disableSubmitBtn"
         fast-fail
         @submit.prevent="submit"
       >
@@ -74,7 +75,7 @@
             <v-btn
               class="mt-2"
               type="submit"
-              :disabled="disableSubmitBtn || deleted"
+              :disabled="!disableSubmitBtn || deleted"
               block
             >
               保存
@@ -115,52 +116,64 @@ const disableSubmitBtn: Ref<boolean> = ref(false)
 const rules = {
   nameRules: [
     (value: string) => {
-      if (value.length <= 255) {
-        disableSubmitBtn.value = false
-        return true
+      if (value.length === 0) {
+        return "分组共享账号的名称不得为空。"
       }
-      disableSubmitBtn.value = true
-      return "分组共享账号的名称长度不得超过 255。"
+      if (value.length > 255) {
+        return "分组共享账号的名称长度不得超过 255。"
+      }
+      return true
     }
   ],
   accountRules: [
     (value: string) => {
-      if (value.length <= 255) {
-        disableSubmitBtn.value = false
-        return true
+      if (value.length === 0) {
+        return "分组共享账号不得为空。"
       }
-      disableSubmitBtn.value = true
-      return "分组共享账号长度不得超过 255。"
+      if (value.length > 255) {
+        return "分组共享账号长度不得超过 255。"
+      }
+      return true
     }
   ],
   passwordRules: [
     (value: string) => {
-      if (value.length <= 255) {
-        disableSubmitBtn.value = false
-        return true
+      if (value.length === 0) {
+        return "分组共享账号的密码不得为空。"
       }
-      disableSubmitBtn.value = true
-      return "分组共享账号的密码长度不得超过 255。"
+      if (value.length > 255) {
+        return "分组共享账号的密码长度不得超过 255。"
+      }
+      return true
     }
   ],
   manageRules: [
     (value: string) => {
-      if (value.length <= 255) {
-        disableSubmitBtn.value = false
-        return true
+      if (value.length === 0) {
+        return "分组共享账号的官网不得为空。"
       }
-      disableSubmitBtn.value = true
-      return "分组共享账号的官网长度不得超过 255。"
+      if (value.length > 255) {
+        return "分组共享账号的官网长度不得超过 255。"
+      }
+
+      try { new URL(value) }
+      catch { return "分组共享账号的官网不是一个合法的链接。" }
+
+      return true
     }
   ],
   affRules: [
     (value: string) => {
-      if (value.length <= 255) {
-        disableSubmitBtn.value = false
-        return true
+      if (value.length > 255) {
+        return "分组共享账号的邀请码长度不得超过 255。"
       }
-      disableSubmitBtn.value = true
-      return "分组共享账号的邀请码长度不得超过 255。"
+
+      if (value.length > 0) {
+        try { new URL(value) }
+        catch { return "分组共享账号的邀请码不是一个合法的链接。" }
+      }
+
+      return true
     }
   ]
 }
@@ -182,9 +195,9 @@ async function submit() {
     .catch(error => {
       const axiosError = error as AxiosError<ReturnMessage>
       if (axiosError.response && axiosError.response.data.message) {
-        notifyerStore.message = `保存数据时发生错误。${error.response.data.message}`;
+        notifyerStore.message = `保存数据时发生错误。${error.response.data.message}`
       } else {
-        notifyerStore.message = "保存数据时发生错误。详情请查看开发者日志。";
+        notifyerStore.message = "保存数据时发生错误。详情请查看开发者日志。"
         console.error(error)
       }
     })
@@ -193,8 +206,8 @@ async function submit() {
 
 /** 删除确认 */
 function delete_confirm() {
-  notifyerStore.message="请双击来确认删除。"
-  notifyerStore.open=true
+  notifyerStore.message = "请双击来确认删除。"
+  notifyerStore.open = true
 }
 
 /** 删除数据 */
@@ -217,9 +230,9 @@ async function delete_share() {
     .catch(error => {
       const axiosError = error as AxiosError<ReturnMessage>
       if (axiosError.response && axiosError.response.data.message) {
-        notifyerStore.message = `删除数据时发生错误。${error.response.data.message}`;
+        notifyerStore.message = `删除数据时发生错误。${error.response.data.message}`
       } else {
-        notifyerStore.message = "删除数据时发生错误。";
+        notifyerStore.message = "删除数据时发生错误。"
         console.error(error)
       }
     })

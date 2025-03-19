@@ -89,7 +89,7 @@ const links = {
     blank: false,
   },
   客户端: {
-    link: 'https://171a265b-e863-445c-a8b9-4b5595cc5964.summonhim.top/',
+    link: 'https://5ubm4nd0c.summonhim.top',
     blank: true,
   },
 }

@@ -2,6 +2,7 @@
   <v-card v-bind="$attrs">
     <v-container>
       <v-form
+        v-model="disableSubmitBtn"
         fast-fail
         @submit.prevent="submit"
       >
@@ -158,7 +159,7 @@
             <v-btn
               class="mt-2"
               type="submit"
-              :disabled="disableSubmitBtn || deleted"
+              :disabled="!disableSubmitBtn || deleted"
               block
             >
               保存
@@ -195,37 +196,41 @@ const display: Ref<Props> = ref({
 /** 已删除？ */
 const deleted: Ref<boolean> = ref(false)
 /** 禁用提交按钮 */
-const disableSubmitBtn: Ref<boolean> = ref(false)
+const disableSubmitBtn: Ref<boolean> = ref(true)
 /** 表单规则 */
 const rules = {
   orderRules: [
     (value: number) => {
-      if (value >= 0 && value <= 255) {
-        disableSubmitBtn.value = false
-        return true
+      if (value < 0 || value > 255) {
+        return "分组订阅的排序需为小于等于 255 以内的无符号的正整数。"
       }
-      disableSubmitBtn.value = true
-      return "分组订阅的排序需为小于等于 255 以内的无符号的正整数。"
+      return true
     }
   ],
   nameRules: [
     (value: string) => {
-      if (value.length <= 25) {
-        disableSubmitBtn.value = false
-        return true
+      if (value.length === 0) {
+        return "分组订阅名称不得为空。"
       }
-      disableSubmitBtn.value = true
-      return "分组订阅名称的字符长度不能超过 25。"
+      if (value.length > 25) {
+        return "分组订阅名称的字符长度不能超过 25。"
+      }
+      return true
     }
   ],
   urlRules: [
     (value: string) => {
-      if (value.length <= 255) {
-        disableSubmitBtn.value = false
-        return true
+      if (value.length === 0) {
+        return "分组订阅链接不得为空。"
       }
-      disableSubmitBtn.value = true
-      return "分组订阅链接的字符长度不能超过 255。"
+      if (value.length > 255) {
+        return "分组订阅链接的字符长度不能超过 255。"
+      }
+
+      try { new URL(value) }
+      catch { return "分组订阅链接不是一个合法的链接。" }
+
+      return true
     }
   ]
 }
@@ -264,8 +269,8 @@ async function submit() {
 
 /** 确认删除 */
 function delete_confirm() {
-  notifyerStore.message="请双击来确认删除。"
-  notifyerStore.open=true
+  notifyerStore.message = "请双击来确认删除。"
+  notifyerStore.open = true
 }
 
 /** 删除订阅 */
@@ -278,7 +283,7 @@ async function delete_subscribe() {
         ...display.value,
         name: "已删除",
         url: "已删除",
-        order: 0,
+        order: 255,
         converter: false
       }
       deleted.value = true

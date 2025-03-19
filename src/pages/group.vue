@@ -72,7 +72,7 @@
                   block
                   @click="createSubscribe"
                 >
-                  添加
+                  添加新订阅
                 </v-btn>
 
                 <div v-if="groupSubscribesInfo.subscribes.length > 0">
@@ -89,6 +89,13 @@
                       :converter_options="res.converter_options"
                       class="mb-4"
                     />
+                    <v-btn
+                      class="mb-4"
+                      block
+                      @click="createSubscribe"
+                    >
+                      添加新订阅
+                    </v-btn>
                   </div>
                   <div v-else>
                     <Subscribe
@@ -123,7 +130,7 @@
                   block
                   @click="createShare"
                 >
-                  添加
+                  添加新共享账号
                 </v-btn>
                 <div v-if="groupShareInfo.share.length > 0">
                   <div v-if="editorMode">
@@ -140,6 +147,13 @@
                       :create_date="res.create_date"
                       class="mb-4"
                     />
+                    <v-btn
+                      class="mb-4"
+                      block
+                      @click="createShare"
+                    >
+                      添加新共享账号
+                    </v-btn>
                   </div>
                   <div v-else>
                     <Share
@@ -304,7 +318,7 @@ async function createSubscribe() {
   const data = [{
     order: 255,
     name: "新订阅",
-    url: "https://",
+    url: "https://xxx",
     converter: true
   }]
 
@@ -332,9 +346,9 @@ async function createSubscribe() {
 async function createShare() {
   const data = [{
     name: "新共享账号",
-    account: "",
-    password: "",
-    manage: "",
+    account: "新共享账号",
+    password: "新共享账号密码",
+    manage: "http://xxx",
     aff: ""
   }]
 
