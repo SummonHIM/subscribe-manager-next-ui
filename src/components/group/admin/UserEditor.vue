@@ -1,5 +1,30 @@
 <template>
   <v-container>
+    <div class="d-flex justify-end">
+      <v-btn
+        color="red"
+        class="mr-4"
+        @click="delete_confirm"
+        @dblclick="delete_ug"
+      >
+        删除
+      </v-btn>
+      <v-tooltip
+        location="bottom"
+      >
+        <template #activator="{ props: tooltipProps }">
+          <v-btn
+            v-bind="tooltipProps"
+            @click="submit"
+          >
+            保存
+          </v-btn>
+        </template>
+        <span>
+          仅保存本页内容
+        </span>
+      </v-tooltip>
+    </div>
     <v-data-table-server
       v-model="items.selected"
       v-model:page="table.page"
@@ -14,6 +39,8 @@
       page-text="{0}-{1} / {2}"
       no-data-text="暂无数据"
       items-per-page-text="每页显示："
+      :items-per-page-options="[10, 25, 50, 100]"
+      class="mb-2"
       @update:options="fetchUserGroups"
     >
       <!-- eslint-disable-next-line vue/valid-v-slot -->
@@ -27,85 +54,47 @@
         />
       </template>
     </v-data-table-server>
-    <v-row class="mt-2">
-      <v-col>
-        <v-btn
-          color="red"
-          block
-          @click="delete_confirm"
-          @dblclick="delete_ug"
-        >
-          删除已选用户
-        </v-btn>
-      </v-col>
-      <v-col>
-        <v-btn
-          block
-          @click="addUserDialog.open = true"
-        >
-          添加用户
-        </v-btn>
-      </v-col>
-      <v-col>
-        <v-btn
-          block
-          @click="submit"
-        >
-          保存当前表格页
-        </v-btn>
-      </v-col>
-    </v-row>
-  </v-container>
-
-  <v-dialog
-    v-model="addUserDialog.open"
-    persistent
-    max-width="600"
-  >
-    <v-card
-      prepend-icon="mdi-account-plus"
-      title="添加新用户"
-    >
-      <v-container>
+    <v-divider class="mb-4" />
+    <p class="mb-2">
+      添加新用户
+    </p>
+    <v-row align="center">
+      <v-col
+        cols="12"
+        sm="10"
+      >
         <v-combobox
-          v-model="addUserDialog.uid"
+          v-model="userAddForm.uid"
           no-filter
-          :items="addUserDialog.searchResult.display"
+          :items="userAddForm.searchResult.display"
           label="用户 ID"
           variant="outlined"
           @input="handleUidSearch"
         >
           <template #item="{ props, item }">
             <v-list-item v-bind="props">
-              <v-list-item-content>
-                <v-list-item-subtitle>{{ uidToUserName(item.value) }}</v-list-item-subtitle>
-              </v-list-item-content>
+              <v-list-item-subtitle>{{ uidToUserName(item.value) }}</v-list-item-subtitle>
             </v-list-item>
           </template>
         </v-combobox>
-        <v-text-field
-          v-model="addUserDialog.expire"
-          label="过期日"
-          variant="outlined"
-        />
-      </v-container>
-      <template #actions>
-        <v-btn
-          text="返回"
-          @click="addUserDialog.open = false"
-        />
+      </v-col>
+      <v-col>
         <v-btn
           text="保存"
+          block
+          class="mb-6"
           @click="create"
         />
-      </template>
-    </v-card>
-  </v-dialog>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts" setup>
-import axios, { AxiosError } from 'axios'
 import { format } from 'date-fns'
+import axios, { AxiosError } from 'axios'
+
+import { getNextMonth } from '@/dateTime'
 import { useNotifyerStore } from '@/stores/notifyer'
 import type { ReturnMessage, ReturnResult, UserGroups, Users } from '@/interfaces'
 
@@ -124,14 +113,13 @@ interface Sort {
   key: string,
   order: "asc" | "desc"
 }
+
 interface SearchResult {
   result: Users[]
   display: string[]
 }
-interface AddUserDialog {
-  open: boolean,
-  uid: string,
-  expire: string,
+interface userAddForm {
+  uid: string | null,
   searchResult: SearchResult
 }
 
@@ -155,16 +143,36 @@ const items: Ref<Items> = ref({
   selected: [],
   length: 0
 })
-/** 新建用户 */
-const addUserDialog: Ref<AddUserDialog> = ref({
-  open: false,
-  uid: "",
-  expire: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+
+const userAddForm: Ref<userAddForm> = ref({
+  uid: null,
   searchResult: {
     result: [],
     display: []
   }
 })
+
+/**
+ * 获取用户名
+ * @param uid 用户 ID
+ */
+ async function fetchUserName(uid: string) {
+  try {
+    const response = await axios.get<ReturnResult<Users>>(`/api/v2/admin/users?gid=${gid}&uid=${uid}&limit=1&offset=0`)
+    if (response.data.status === 200) {
+      return response.data.result[0].username
+    }
+  } catch (error) {
+    const axiosError = error as AxiosError<ReturnMessage>
+    if (axiosError.response && axiosError.response.data.message) {
+      notifyerStore.message = `获取用户时发生错误。${axiosError.response.data.message}`
+    } else {
+      notifyerStore.message = "获取用户时发生错误。详情请查看开发者日志。"
+      console.error(error)
+    }
+    notifyerStore.open = true
+  }
+}
 
 /**
  * 获取分组用户
@@ -200,55 +208,6 @@ async function fetchUserGroups(
   } finally {
     table.value.loading = false
   }
-}
-
-/**
- * 获取用户名
- * @param uid 用户 ID
- */
-async function fetchUserName(uid: string) {
-  try {
-    const response = await axios.get<ReturnResult<Users>>(`/api/v2/admin/users?gid=${gid}&uid=${uid}&limit=1&offset=0`)
-    if (response.data.status === 200) {
-      return response.data.result[0].username
-    }
-  } catch (error) {
-    const axiosError = error as AxiosError<ReturnMessage>
-    if (axiosError.response && axiosError.response.data.message) {
-      notifyerStore.message = `获取用户时发生错误。${axiosError.response.data.message}`
-    } else {
-      notifyerStore.message = "获取用户时发生错误。详情请查看开发者日志。"
-      console.error(error)
-    }
-    notifyerStore.open = true
-  }
-}
-
-/**
- * 搜索用户的用户 ID
- * @param like 搜索字段
- */
-async function searchUid(like: string) {
-  if (!like)
-    return []
-
-  try {
-    const response = await axios.get<ReturnResult<Users>>(`/api/v2/admin/users?gid=${gid}&like=${like}&limit=10&offset=0`)
-    if (response.data.status === 200) {
-      return response.data.result
-    }
-  } catch (error) {
-    const axiosError = error as AxiosError<ReturnMessage>
-    if (axiosError.response && axiosError.response.data.message) {
-      notifyerStore.message = `获取用户时发生错误。${axiosError.response.data.message}`
-    } else {
-      notifyerStore.message = "获取用户时发生错误。详情请查看开发者日志。"
-      console.error(error)
-    }
-    notifyerStore.open = true
-  }
-
-  return []
 }
 
 /** 删除确认 */
@@ -307,18 +266,16 @@ async function submit() {
 /** 创建分组用户 */
 async function create() {
   const data = [{
-    uid: addUserDialog.value.uid,
-    expire: addUserDialog.value.expire
+    uid: userAddForm.value.uid,
+    expire: format(getNextMonth(), 'yyyy-MM-dd HH:mm:ss')
   }]
 
   await axios.post<ReturnMessage>(`/api/v2/admin/group/users?where_gid=${gid}`, data)
     .then(response => {
       notifyerStore.message = response.data.message
 
-      addUserDialog.value = {
-        open: false,
+      userAddForm.value = {
         uid: "",
-        expire: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         searchResult: {
           result: [],
           display: []
@@ -339,11 +296,38 @@ async function create() {
   await fetchUserGroups({ page: table.value.page, itemsPerPage: table.value.itemsPerPage, sortBy: [] })
 }
 
+/**
+ * 搜索用户的用户 ID
+ * @param like 搜索字段
+ */
+ async function searchUid(like: string | null) {
+  if (!like)
+    return []
+
+  try {
+    const response = await axios.get<ReturnResult<Users>>(`/api/v2/admin/users?gid=${gid}&like=${like}&limit=10&offset=0`)
+    if (response.data.status === 200) {
+      return response.data.result
+    }
+  } catch (error) {
+    const axiosError = error as AxiosError<ReturnMessage>
+    if (axiosError.response && axiosError.response.data.message) {
+      notifyerStore.message = `获取用户时发生错误。${axiosError.response.data.message}`
+    } else {
+      notifyerStore.message = "获取用户时发生错误。详情请查看开发者日志。"
+      console.error(error)
+    }
+    notifyerStore.open = true
+  }
+
+  return []
+}
+
 /** 处理搜索用户 ID */
 async function handleUidSearch() {
-  const result = await searchUid(addUserDialog.value.uid)
-  addUserDialog.value.searchResult.result = result
-  addUserDialog.value.searchResult.display = result.map(user => user.uid)
+  const result = await searchUid(userAddForm.value.uid)
+  userAddForm.value.searchResult.result = result
+  userAddForm.value.searchResult.display = result.map(user => user.uid)
 }
 
 /**
@@ -351,7 +335,7 @@ async function handleUidSearch() {
  * @param uid 用户 ID
  */
 function uidToUserName(uid: string): string | undefined {
-  const user = addUserDialog.value.searchResult.result.find(user => user.uid === uid)
+  const user = userAddForm.value.searchResult.result.find(user => user.uid === uid)
   return user ? user.username : undefined
 }
 </script>
