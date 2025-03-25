@@ -157,8 +157,8 @@ const tableItem: Ref<TableItem<Users>> = ref({
   length: 0,
   headers: [
     { key: "actions", title: "操作", minWidth: "85" },
-    { key: "uid", title: "分组 ID", sortable: true, minWidth: "300" },
-    { key: "username", title: "订阅名称", sortable: true, minWidth: "215" },
+    { key: "uid", title: "用户 ID", sortable: true, minWidth: "300" },
+    { key: "username", title: "用户名", sortable: true, minWidth: "215" },
     { key: "root", title: "超级管理员", sortable: true, minWidth: "125" },
     { key: "create_date", title: "创建日期", sortable: true, minWidth: "165" }
   ],

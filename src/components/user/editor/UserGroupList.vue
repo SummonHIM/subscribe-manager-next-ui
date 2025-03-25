@@ -234,8 +234,8 @@ const tableItem: Ref<TableItem<UserGroups>> = ref({
   headers: [
     { key: "actions", title: "操作", minWidth: "85" },
     { key: "ugid", title: "用户分组 ID", sortable: true, minWidth: "300" },
-    ...(componentProps.type === 'inGroup' ? [{ key: "uid", title: "用户 ID", sortable: true, minWidth: "300" }] : []),
-    ...(componentProps.type === 'inUser' ? [{ key: "gid", title: "分组 ID", sortable: true, minWidth: "300" }] : []),
+    ...(componentProps.type === 'inGroup' ? [{ key: "uid", title: "用户 ID", sortable: true, minWidth: "350" }] : []),
+    ...(componentProps.type === 'inUser' ? [{ key: "gid", title: "分组 ID", sortable: true, minWidth: "350" }] : []),
     { key: "expire", title: "过期日", sortable: true, minWidth: "165" },
     ...(componentProps.root ? [{ key: "admin", title: "分组管理员", sortable: true, minWidth: "125" }] : [])
   ],

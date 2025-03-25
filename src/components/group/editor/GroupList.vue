@@ -149,7 +149,7 @@ const tableItem: Ref<TableItem<Groups>> = ref({
   headers: [
     { key: "actions", title: "操作", minWidth: "85" },
     { key: "gid", title: "分组 ID", sortable: true, minWidth: "300" },
-    { key: "name", title: "订阅名称", sortable: true, minWidth: "215" },
+    { key: "name", title: "分组名称", sortable: true, minWidth: "215" },
     { key: "create_date", title: "创建日期", sortable: true, minWidth: "165" }
   ],
   mainValue: "gid",
