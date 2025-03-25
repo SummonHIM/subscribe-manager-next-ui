@@ -8,13 +8,19 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppBar: typeof import('./components/AppBar.vue')['default']
+    Footer: typeof import('./components/Footer.vue')['default']
+    GroupList: typeof import('./components/group/editor/GroupList.vue')['default']
+    GroupSubscribe: typeof import('./components/group/editor/SubscribeList.vue')['default']
     Notifyer: typeof import('./components/Notifyer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Share: typeof import('./components/group/Share.vue')['default']
-    ShareEditor: typeof import('./components/group/admin/ShareEditor.vue')['default']
+    ShareList: typeof import('./components/group/editor/ShareList.vue')['default']
     Subscribe: typeof import('./components/group/Subscribe.vue')['default']
-    SubscribeEditor: typeof import('./components/group/admin/SubscribeEditor.vue')['default']
-    UserEditor: typeof import('./components/group/admin/UserEditor.vue')['default']
+    SubscribeList: typeof import('./components/group/editor/SubscribeList.vue')['default']
+    UserGroupList: typeof import('./components/user/editor/UserGroupList.vue')['default']
+    UserList: typeof import('./components/user/editor/UserList.vue')['default']
+    UserToken: typeof import('./components/user/editor/UserTokenList.vue')['default']
+    UserTokenList: typeof import('./components/user/editor/UserTokenList.vue')['default']
   }
 }

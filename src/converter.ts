@@ -1,8 +1,6 @@
 import type { ConverterOptions, ConverterForm } from "@/interfaces"
 
-/**
- * 图形化转换选项的数据
- */
+/** 图形化转换选项的数据 */
 export const converterForm: ConverterForm = {
     订阅配置: {
         config: { label: '外部配置', type: 'text', tooltip: '指外部配置的地址（包含分组和规则部分），当此参数不存在时使用订阅转换器中的配置文件。', cols: 12 },
@@ -45,9 +43,7 @@ export const converterForm: ConverterForm = {
     }
 }
 
-/**
-* 默认转换选项
-*/
+/** 默认转换选项 */
 export const defaultConverterOptions: ConverterOptions = {
     target: 'auto',
     ver: '',
@@ -82,4 +78,19 @@ export const defaultConverterOptions: ConverterOptions = {
     classic: false,
     tls13: false,
     new_name: true,
+}
+
+/**
+ * 过滤与默认值相同的选项
+ * @param converterOptions 转换选项
+ * @returns 过滤后的转换选项
+ */
+export function fliterDefaultOptions(converterOptions: ConverterOptions) {
+  const filteredOptions = Object.fromEntries(
+    Object.entries(converterOptions).filter(([key, val]) => {
+      return val !== defaultConverterOptions[key as keyof ConverterOptions];
+    })
+  );
+
+  return filteredOptions;
 }

@@ -1,16 +1,11 @@
 <template>
   <v-app>
     <v-main>
-      <Suspense>
-        <AppBar />
-      </Suspense>
+      <AppBar flat />
       <Suspense>
         <router-view />
       </Suspense>
+      <Footer />
     </v-main>
   </v-app>
 </template>
-
-<script lang="ts" setup>
-
-</script>

@@ -63,6 +63,7 @@ interface Display extends GroupShare {
 
 const notifyerStore = useNotifyerStore()
 const props = defineProps<Props>()
+/** 实际显示的内容 */
 const display: Ref<Display> = ref({
   ...props,
   show_password: false

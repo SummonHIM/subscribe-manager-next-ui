@@ -50,8 +50,8 @@
             <v-expansion-panel-text>
               <v-switch
                 v-model="convertedUrl.showOriginal"
-                color="primary"
                 label="显示原始订阅链接"
+                color="primary"
                 @change="switchOriginal(convertedUrl.showOriginal)"
               />
 
@@ -59,7 +59,7 @@
                 v-if="alertServerConverterOption()"
                 class="mb-8"
                 type="warning"
-                :text="`服务器已为该订阅链接强制设置如下参数：${alertServerConverterOption()}`"
+                :text="`服务器已为该订阅链接设置如下自定义选项：${alertServerConverterOption()}。但无需多虑，以下自定义选项仍能强制覆盖服务器的自定义选项。`"
               />
 
               <div
@@ -102,8 +102,8 @@
                         <v-switch
                           v-bind="tooltipProps"
                           v-model="convertedUrl.converterOption[key as keyof ConverterOptions]"
-                          :label="config.label"
                           color="primary"
+                          :label="config.label"
                           @change="updateConverterOption(key as keyof ConverterOptions, convertedUrl.converterOption[key as keyof ConverterOptions])"
                         />
                       </template>
@@ -202,48 +202,57 @@ import axios, { AxiosError } from "axios"
 import QrcodeVue from 'qrcode.vue'
 import { useNotifyerStore } from "@/stores/notifyer"
 import { useConvertedUrlsStore } from "@/stores/convertedUrls"
-import { defaultConverterOptions, converterForm } from "@/plugins/converter"
+import { defaultConverterOptions, converterForm } from "@/converter"
 import type { ConverterOptions, GroupSubscribes, ReturnMessage, ReturnResult, UserToken } from "@/interfaces"
 
-/**
- * 传入的参数
- */
 type Props = GroupSubscribes
 
-/**
- * 经过转换的 URL
- */
+/** 经过转换的 URL */
 interface ConvertedUrl {
   url: string
   showOriginal: boolean
   converterOption: ConverterOptions
 }
 
+/** 刷新用户令牌 */
+interface userTokenRefresh {
+  steps: number
+  timeout: ReturnType<typeof setTimeout> | null
+}
+
+/** 导入方案 */
 interface ImportSchemes {
   title: string
   value: string
 }
 
+/** 二维码对话框 */
 interface QRCodeDialog {
   open: boolean
   link_type: string
 }
 
+const props = defineProps<Props>()
 const notifyerStore = useNotifyerStore()
 const convertedUrlsStore = useConvertedUrlsStore()
-const props = defineProps<Props>()
+/** 转换后的 Url */
 const convertedUrl = ref<ConvertedUrl>({
   url: props.url,
   showOriginal: false,
   converterOption: defaultConverterOptions
 })
+/** 用户令牌 */
 const userToken: Ref<UserToken> = ref({
   token: "",
   uid: "",
   sid: ""
 })
-const userTokenRefresh: Ref<number> = ref(0)
-let userTokenRefreshTimeout: ReturnType<typeof setTimeout> | null = null
+/** 刷新用户令牌 */
+const userTokenRefresh: Ref<userTokenRefresh> = ref({
+  steps: 0,
+  timeout: null
+})
+/** 导入方案 */
 const importSchemes: Ref<ImportSchemes[]> = ref([
   { title: 'Clash', value: 'clash' },
   { title: 'Surfboard', value: 'surfboard' },
@@ -251,6 +260,7 @@ const importSchemes: Ref<ImportSchemes[]> = ref([
   { title: 'sing-box', value: 'singbox' },
   { title: 'Quantumult X', value: 'quantumultx' },
 ])
+/** 二维码对话框 */
 const qrCodeDialog: Ref<QRCodeDialog> = ref({
   open: false,
   link_type: 'clash'
@@ -324,7 +334,6 @@ function generateUrl(): URL {
 
 /** 显示原始链接 */
 function switchOriginal(open: boolean) {
-  console.log(`显示原始订阅链接${open}`)
   switch (open) {
     case true:
       convertedUrl.value.url = props.url
@@ -366,17 +375,17 @@ function alertServerConverterOption(): string {
 
 /** 刷新令牌 */
 async function refreshToken() {
-  if (userTokenRefreshTimeout) {
-    clearTimeout(userTokenRefreshTimeout)
+  if (userTokenRefresh.value.timeout) {
+    clearTimeout(userTokenRefresh.value.timeout)
   }
 
   // 启动一个新的 30 秒定时器
-  userTokenRefreshTimeout = setTimeout(() => {
-    userTokenRefresh.value = 0
+  userTokenRefresh.value.timeout = setTimeout(() => {
+    userTokenRefresh.value.steps = 0
   }, 30000)
 
-  userTokenRefresh.value += 1
-  switch (userTokenRefresh.value) {
+  userTokenRefresh.value.steps += 1
+  switch (userTokenRefresh.value.steps) {
     case 1:
       notifyerStore.message = "真的要刷新该订阅链接的令牌吗？刷新后需要重新导入订阅才能更新。再按一次本图标来刷新该订阅链接的令牌。"
       notifyerStore.open = true
@@ -399,13 +408,13 @@ async function refreshToken() {
         notifyerStore.open = true
       }
 
-      userTokenRefresh.value = 0
-      clearTimeout(userTokenRefreshTimeout)
+      userTokenRefresh.value.steps = 0
+      clearTimeout(userTokenRefresh.value.timeout)
       break
     default:
-      userTokenRefresh.value = 0
-      clearTimeout(userTokenRefreshTimeout)
-      userTokenRefreshTimeout = null
+      userTokenRefresh.value.steps = 0
+      clearTimeout(userTokenRefresh.value.timeout)
+      userTokenRefresh.value.timeout = null
       break
   }
 }

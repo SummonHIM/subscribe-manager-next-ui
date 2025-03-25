@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar flat>
+  <v-app-bar v-bind="componentProps">
     <v-container class="mx-auto d-flex align-center justify-center">
       <v-btn
         v-for="link, name in links"
@@ -26,6 +26,7 @@
             <v-list-item
               href="https://auth.summonhim.top:8443/if/user/#/settings"
               target="_blank"
+              append-icon="mdi-open-in-new"
             >
               用户选项
             </v-list-item>
@@ -37,33 +38,30 @@
                 />
               </template>
 
-              <v-list-item @click="setTheme('auto')">
+              <v-list-item
+                :active="themeStore.theme === 'auto'"
+                @click="setTheme('auto')"
+              >
                 自动
-                <v-icon
-                  :class="themeStore.theme !== 'auto' ? 'd-none' : ''"
-                  icon="mdi-check"
-                />
               </v-list-item>
-              <v-list-item @click="setTheme('light')">
+              <v-list-item
+                :active="themeStore.theme === 'light'"
+                @click="setTheme('light')"
+              >
                 浅色
-                <v-icon
-                  :class="themeStore.theme !== 'light' ? 'd-none' : ''"
-                  icon="mdi-check"
-                />
               </v-list-item>
-              <v-list-item @click="setTheme('dark')">
+              <v-list-item
+                :active="themeStore.theme === 'dark'"
+                @click="setTheme('dark')"
+              >
                 深色
-                <v-icon
-                  :class="themeStore.theme !== 'dark' ? 'd-none' : ''"
-                  icon="mdi-check"
-                />
               </v-list-item>
             </v-list-group>
-            <!-- <div v-if="appStore.root">
+            <div v-if="appStore.root">
               <v-list-item to="/root">
                 超管后台
               </v-list-item>
-            </div> -->
+            </div>
             <v-list-item @click="appStore.logout">
               登出
             </v-list-item>
@@ -78,7 +76,9 @@
 import { useTheme } from 'vuetify'
 import { useAppStore } from '@/stores/app'
 import { useThemeStore } from '@/stores/theme'
+import { VAppBar } from 'vuetify/components';
 
+const componentProps = defineProps(VAppBar)
 const appTheme = useTheme()
 const appStore = useAppStore()
 const themeStore = useThemeStore()
