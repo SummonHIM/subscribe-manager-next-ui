@@ -77,10 +77,14 @@ const paginationTotalVisible = computed(() => {
  * @param expire 过期日
  * @param admin 是否是管理员
  */
-function isExpired(expire: Date, admin: boolean = false): boolean {
+function isExpired(expire: Date | string, admin: boolean = false): boolean {
   if (admin) return false
   const now = new Date()
-  return now.getTime() > expire.getTime()
+  if (expire instanceof Date) {
+    return now.getTime() > expire.getTime()
+  } else {
+    return now.getTime() > new Date(expire).getTime()
+  }
 }
 
 /**

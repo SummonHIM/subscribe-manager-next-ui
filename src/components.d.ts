@@ -10,7 +10,6 @@ declare module 'vue' {
     AppBar: typeof import('./components/AppBar.vue')['default']
     Footer: typeof import('./components/Footer.vue')['default']
     GroupList: typeof import('./components/group/editor/GroupList.vue')['default']
-    GroupSubscribe: typeof import('./components/group/editor/SubscribeList.vue')['default']
     Notifyer: typeof import('./components/Notifyer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
@@ -20,7 +19,6 @@ declare module 'vue' {
     SubscribeList: typeof import('./components/group/editor/SubscribeList.vue')['default']
     UserGroupList: typeof import('./components/user/editor/UserGroupList.vue')['default']
     UserList: typeof import('./components/user/editor/UserList.vue')['default']
-    UserToken: typeof import('./components/user/editor/UserTokenList.vue')['default']
     UserTokenList: typeof import('./components/user/editor/UserTokenList.vue')['default']
   }
 }

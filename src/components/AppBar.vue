@@ -78,7 +78,7 @@ import { useAppStore } from '@/stores/app'
 import { useThemeStore } from '@/stores/theme'
 import { VAppBar } from 'vuetify/components';
 
-const componentProps = defineProps(VAppBar)
+const componentProps = defineProps(VAppBar['$props'])
 const appTheme = useTheme()
 const appStore = useAppStore()
 const themeStore = useThemeStore()
