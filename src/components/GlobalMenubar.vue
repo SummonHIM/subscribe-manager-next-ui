@@ -88,6 +88,11 @@ const userMenuItems: Ref<MenuItem[]> = ref([
     ],
   },
   {
+    label: '超管后台',
+    url: '/admin/',
+    visible: applicationStore.user?.is_staff,
+  },
+  {
     separator: true,
   },
   {
