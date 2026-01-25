@@ -1,5 +1,5 @@
 <template>
-  <Menubar class="mx-1 mt-2 mb-2">
+  <Menubar v-bind="$attrs" class="mx-1 mt-2 mb-2">
     <template #start>
       <Button asChild v-slot="slotProps" severity="contrast" variant="text">
         <RouterLink to="/" :class="slotProps.class">
@@ -23,6 +23,15 @@
       </div>
     </template>
   </Menubar>
+
+  <Dialog v-model:visible="logoutVisible" modal :style="{ width: '30rem' }" header="登出确认">
+    <p>你确定要登出吗？</p>
+    <form class="flex justify-end gap-2 mt-4" action="/oidc/logout/" method="POST">
+      <input type="hidden" name="csrfmiddlewaretoken" :value="applicationStore.csrfToken" />
+      <Button label="取消" icon="pi pi-times" text @click="logoutVisible = false" />
+      <Button label="确定" icon="pi pi-check" type="submit" />
+    </form>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -41,6 +50,7 @@ const appearanceStore = useAppearanceStore()
 const userGravatarUrl = await genGravatar(
   applicationStore.user?.email ? applicationStore.user.email : '',
 )
+const logoutVisible = ref(false)
 const userMenuMethods: Ref<TieredMenuMethods | null> = ref(null)
 const userMenuItems: Ref<MenuItem[]> = ref([
   {
@@ -98,7 +108,7 @@ const userMenuItems: Ref<MenuItem[]> = ref([
   {
     label: '登出',
     command: () => {
-      applicationStore.logoutUser()
+      logoutVisible.value = true
     },
   },
 ])
