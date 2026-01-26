@@ -7,6 +7,7 @@ import Components from 'unplugin-vue-components/vite'
 import Pages from 'vite-plugin-pages'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import tailwindcss from '@tailwindcss/vite'
+import vitePluginBundleObfuscator from 'vite-plugin-bundle-obfuscator'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,10 +17,23 @@ export default defineConfig({
     Components({ resolvers: [PrimeVueResolver()] }),
     Pages({ dirs: 'src/views' }),
     tailwindcss(),
+    vitePluginBundleObfuscator(),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        passes: 2,
+      },
+      format: {
+        comments: false,
+      },
     },
   },
   test: {
