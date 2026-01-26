@@ -61,8 +61,8 @@
                 。
               </template>
             </Message>
-            <div class="sm:flex items-center gap-4">
-              <div class="flex gap-2 mb-2 sm:mb-0">
+            <div class="sm:flex items-center gap-4 mt-4">
+              <div class="flex gap-2 mb-3 sm:mb-0">
                 <ToggleSwitch v-model="displayUrlOpenConverter" />
                 <p>使用订阅转换</p>
               </div>

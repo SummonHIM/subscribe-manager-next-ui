@@ -15,7 +15,9 @@
 
   <template v-if="group.id > 0">
     <div class="mx-auto pt-8 pb-8 max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
-      <GlobalToolbar v-model="menuSelected" :buttons="menuItems" />
+      <GlobalToolbar v-model="topMenuItemsSelected" :buttons="topMenuItems" />
+
+      <GlobalToolbar v-model="menuSelected" :buttons="menuItems" class="mt-4" />
 
       <div v-if="menuSelected.label === '订阅'" class="mt-8">
         <template v-if="groupSubscribes.count > 0">
@@ -115,7 +117,8 @@ const apiGroupStore = useAPIGroupStore()
 
 const queryGroupID = Number(route.query.id)
 
-const menuItems: GlobalTabbarButtonProps[] = [
+// 俩菜单
+const topMenuItems: GlobalTabbarButtonProps[] = [
   {
     id: 'back',
     label: '返回',
@@ -123,6 +126,17 @@ const menuItems: GlobalTabbarButtonProps[] = [
     hidden: false,
     href: '/',
   },
+  {
+    id: 'back-hidden',
+    label: '返回',
+    icon: 'pi pi-arrow-left',
+    hidden: true,
+  },
+]
+const topMenuItemsSelected = ref<GlobalTabbarButtonProps>(
+  topMenuItems.find((item) => item.id === 'back-hidden')!,
+)
+const menuItems: GlobalTabbarButtonProps[] = [
   {
     id: 'subscribes',
     label: '订阅',
@@ -147,6 +161,7 @@ const menuSelected = ref<GlobalTabbarButtonProps>(
   menuItems.find((item) => item.id === 'subscribes')!,
 )
 
+// 获取分组信息
 const errorMsg: Ref<string | null> = ref(null)
 let tempGroup: APIGroup | null = apiGroupStore.getGroupById(queryGroupID)
 if (!tempGroup) {
@@ -167,6 +182,7 @@ const groupShares: Ref<APIBasicList<APIGroupShares>> = ref({
   results: [],
 })
 
+// 分页
 const paginatorGroupSubscribes = ref(0)
 const paginatorGroupShares = ref(0)
 
@@ -194,6 +210,7 @@ if (group.myself.admin) {
 groupSubscribes.value = await fetchGroupSubscribes(queryGroupID, 10, 0, toast)
 groupShares.value = await fetchGroupShares(queryGroupID, 10, 0, toast)
 
+// 监听分页
 watch(paginatorGroupSubscribes, async () => {
   groupSubscribes.value = await fetchGroupSubscribes(
     queryGroupID,
@@ -202,7 +219,6 @@ watch(paginatorGroupSubscribes, async () => {
     toast,
   )
 })
-
 watch(paginatorGroupShares, async () => {
   groupShares.value = await fetchGroupShares(queryGroupID, 10, paginatorGroupShares.value, toast)
 })

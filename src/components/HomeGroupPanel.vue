@@ -3,12 +3,20 @@
     <Card :class="[card_class, attrs.class]">
       <template #content>
         <div class="flex items-end justify-between gap-3">
-          <div class="flex items-end gap-3">
+          <div class="flex items-end gap-3 min-w-0 flex-1">
             <i class="pi pi-users" style="font-size: 25px"></i>
-            <p class="font-bold">{{ props.group.name }}</p>
+            <p class="font-bold truncate min-w-0">{{ props.group.name }}</p>
           </div>
-          <p :class="{ 'text-red-500': apiGroupStore.isExpired(props.group.myself.expire) }">
-            {{ formatToLocalSystem(props.group.myself.expire) }} 过期
+          <p
+            class="shrink-0"
+            :class="{ 'text-red-500': apiGroupStore.isExpired(props.group.myself.expire) }"
+          >
+            <span class="hidden sm:inline">
+              {{ formatToLocalSystem(props.group.myself.expire) }} 过期
+            </span>
+            <span class="inline sm:hidden">
+              {{ apiGroupStore.isExpired(props.group.myself.expire) ? '已过期' : '' }}
+            </span>
           </p>
         </div>
       </template>

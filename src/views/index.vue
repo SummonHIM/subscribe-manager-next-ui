@@ -1,6 +1,6 @@
 <template>
   <div class="bg-neutral-50 dark:bg-neutral-900"><HomeTitle /></div>
-  <div class="mx-auto pt-8 pb-8 max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
+  <div class="mx-auto pt-8 pb-8 max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
     <h3 class="text-lg font-blod mb-2">我的分组</h3>
 
     <template v-if="apiGroupStore.errorMsg">

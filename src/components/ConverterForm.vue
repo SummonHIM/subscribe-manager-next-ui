@@ -6,17 +6,13 @@
     @submit="onSubmit"
     @reset="onReset"
   >
-    <div v-if="!simplify" class="flex justify-end gap-2 mt-4">
-      <Button label="取消" icon="pi pi-times" text @click="onCancel" />
-      <Button label="恢复" icon="pi pi-refresh" text @click="$form.reset()" />
-      <Button label="保存" icon="pi pi-check" type="submit" />
-    </div>
-
     <template v-for="(fields, category) in converterForm" :key="category">
-      <p>
-        {{ category }}
-      </p>
-      <Divider />
+      <template v-if="category !== 'null'">
+        <p>
+          {{ category }}
+        </p>
+        <Divider />
+      </template>
 
       <div class="grid grid-cols-12 items-center gap-3 mb-4">
         <template v-for="(item, key) in fields" :key="key">

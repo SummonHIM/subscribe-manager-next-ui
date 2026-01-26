@@ -31,7 +31,7 @@
           name="converter-token-list"
           tag="div"
           enter-active-class="transition-[clip-path,opacity] duration-200 ease-out"
-          leave-active-class="transition-[clip-path,opacity] duration-100 ease-in"
+          leave-active-class="transition-[clip-path,opacity] duration-200 ease-in"
           enter-from-class="opacity-0 [clip-path:inset(0_0_100%_0)]"
           enter-to-class="opacity-100 [clip-path:inset(0_0_0_0)]"
           leave-from-class="opacity-100 [clip-path:inset(0_0_0_0)]"

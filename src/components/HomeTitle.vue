@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto pt-8 pb-8 max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
+  <div class="mx-auto pt-8 pb-8 max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
     <h2 class="text-3xl mb-6 text-slate-600 dark:text-slate-300">欢迎回来</h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-10">

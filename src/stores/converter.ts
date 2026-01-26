@@ -75,6 +75,8 @@ export const useConverterStore = defineStore(
         const filteredTokens = tokens.value.filter((token) => token !== '') // 或 filter(Boolean)
         if (filteredTokens.length) {
           params.set('token', filteredTokens.join('|'))
+        } else {
+          return ''
         }
       }
 

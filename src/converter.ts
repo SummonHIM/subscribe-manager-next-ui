@@ -419,7 +419,7 @@ export const converterFormsFull = {
 }
 
 export const converterFormsSimplify = {
-  简单配置: {
+  null: {
     backend: {
       label: '后端地址',
       type: 'text',
