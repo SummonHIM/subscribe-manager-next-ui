@@ -45,7 +45,7 @@ const cards: HomeTitleCards[] = [
     description: '下载适合当前操作系统的代理客户端',
     extra_class: 'bg-yellow-100! dark:bg-stone-700!',
     on_click: () => {
-      window.open('https://5ubm4nd0c.summonhim.top', '_blank')
+      window.open('https://www.123865.com/s/uCWGTd-qn4l?pwd=rXgE#', '_blank')
     },
   },
   {
