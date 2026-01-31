@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import QRCode from 'qrcode'
 import { ref, watch, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
@@ -107,7 +107,8 @@ import type { TieredMenuMethods } from 'primevue'
 
 import { useApplicationStore } from '@/stores/application'
 import { useConverterStore } from '@/stores/converter'
-import type { APIBasicError, APIGroupSubscribes, APIUserSubscribeTokens } from '@/interfaces'
+import type { APIGroupSubscribes, APIUserSubscribeTokens } from '@/interfaces'
+import { parseAPIError } from '@/exceptions'
 
 interface GroupSubscribesProps {
   subscribe: APIGroupSubscribes
@@ -307,42 +308,47 @@ function createImportScheme(type: string, url: string | undefined, name: string 
  * @param refresh 刷新令牌
  */
 const genConvertedURL = async (refresh: boolean = false) => {
-  if (props.subscribe.converter && !displayOriginUrl.value) {
-    try {
-      if (refresh) {
-        const response = await axios.put<APIUserSubscribeTokens>(
-          `/api/v3/token/${props.subscribe.id}/`,
-          {},
-          { headers: { 'X-CSRFToken': applicationStore.csrfToken } },
-        )
-        tokenCache = response.data.token
-      } else if (!tokenCache) {
-        const response = await axios.get<APIUserSubscribeTokens>(
-          `/api/v3/token/${props.subscribe.id}/`,
-        )
-        tokenCache = response.data.token
-      }
+  if (!props.subscribe.converter || displayOriginUrl.value) return
 
-      displayUrl.value = new URL('/api/subscribe', window.location.origin)
-      displayUrl.value.searchParams.set('token', tokenCache)
-      if (!displayUrlOpenConverter.value) displayUrl.value.searchParams.set('converter', 'false')
-    } catch (error) {
-      const axiosError = error as AxiosError<APIBasicError>
-      if (axiosError.response?.data.detail)
-        toast.add({
-          severity: 'error',
-          summary: '获取订阅令牌时发生错误',
-          detail: axiosError.response.data.detail,
-          life: 5000,
-        })
-      else
-        toast.add({
-          severity: 'error',
-          summary: '获取订阅令牌时发生错误',
-          life: 5000,
-        })
-      console.error(error)
+  try {
+    if (refresh) {
+      const response = await axios.put<APIUserSubscribeTokens>(
+        `/api/v3/token/${props.subscribe.id}/`,
+        {},
+        { headers: { 'X-CSRFToken': applicationStore.csrfToken } },
+      )
+      tokenCache = response.data.token
+    } else if (!tokenCache) {
+      const response = await axios.get<APIUserSubscribeTokens>(
+        `/api/v3/token/${props.subscribe.id}/`,
+      )
+      tokenCache = response.data.token
     }
+
+    displayUrl.value = new URL('/api/subscribe', window.location.origin)
+    displayUrl.value.searchParams.set('token', tokenCache)
+    if (!displayUrlOpenConverter.value) displayUrl.value.searchParams.set('converter', 'false')
+  } catch (error) {
+    const { messages } = parseAPIError<APIUserSubscribeTokens>(error)
+
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '获取订阅令牌时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: '获取订阅令牌时发生错误',
+        life: 5000,
+      })
+    }
+
+    console.error(error)
   }
 }
 

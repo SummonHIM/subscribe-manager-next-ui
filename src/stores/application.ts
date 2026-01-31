@@ -1,8 +1,9 @@
 import { ref, type Ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 
-import type { APIBasicError, APICsrf, APIUser } from '@/interfaces'
+import type { APICsrf, APIUser } from '@/interfaces'
+import { parseAPIError } from '@/exceptions'
 
 /** 主应用储存 */
 export const useApplicationStore = defineStore('application', () => {
@@ -24,10 +25,20 @@ export const useApplicationStore = defineStore('application', () => {
       errorMsg.value = null
     } catch (error) {
       $reset()
-      const axiosError = error as AxiosError<APIBasicError>
-      if (axiosError.response?.status === 403) window.location.href = '/oidc/authenticate/'
-      else if (axiosError.response?.data.detail) errorMsg.value = axiosError.response.data.detail
-      else errorMsg.value = '未知错误。'
+
+      // 先检查是否是 403，需要跳转认证
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        window.location.href = '/oidc/authenticate/'
+        return
+      }
+
+      const { messages } = parseAPIError<APIUser>(error)
+      if (messages.length) {
+        // 取第一条作为 errorMsg
+        errorMsg.value = messages.join('，')
+      } else {
+        errorMsg.value = '未知错误。'
+      }
 
       console.error(error)
     }
@@ -56,9 +67,14 @@ export const useApplicationStore = defineStore('application', () => {
       const response = await axios.get<APICsrf>('/api/v3/csrf/')
       csrfToken.value = response.data.csrf_token
     } catch (error) {
-      const axiosError = error as AxiosError<APIBasicError>
-      if (axiosError.response?.data.detail) errorMsg.value = axiosError.response.data.detail
-      else errorMsg.value = '获取防跨站请求伪造令牌时发生错误。'
+      const { messages } = parseAPIError<APICsrf>(error)
+
+      if (messages.length) {
+        errorMsg.value = messages.join('，')
+      } else {
+        errorMsg.value = '获取防跨站请求伪造令牌时发生错误。'
+      }
+
       console.error(error)
     }
   }

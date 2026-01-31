@@ -17,7 +17,7 @@
     lazy
   >
     <Column rowReorder headerStyle="width: 2rem" />
-    <Column field="id" header="ID"></Column>
+    <!-- <Column field="id" header="ID"></Column> -->
     <Column field="name" header="名称"></Column>
     <Column field="account" header="账号"></Column>
     <Column field="password" header="密码">
@@ -189,9 +189,11 @@ const editorResolver = ({ values }: FormResolverOptions) => {
   const errors: Partial<Record<keyof APIGroupSharesEdit, { message: string }[]>> = {}
 
   const name = values.name as string | undefined
-  if (name) {
-    if (name?.length > 255) {
-      errors.name = [{ message: '账号名称长度不得大于 255。' }]
+  if (!name || name.trim().length === 0) {
+    errors.name = [{ message: '请填写账号名称' }]
+  } else {
+    if (name?.length > 150) {
+      errors.name = [{ message: '账号名称长度不得大于 150。' }]
     }
   }
 

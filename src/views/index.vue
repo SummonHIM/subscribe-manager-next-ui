@@ -41,8 +41,8 @@ const apiGroupStore = useAPIGroupStore()
 const paginatorGroup = ref(0)
 
 watch(paginatorGroup, async () => {
-  await apiGroupStore.fetchGroup(10, paginatorGroup.value)
+  await apiGroupStore.fetchGroups(10, paginatorGroup.value)
 })
 
-await apiGroupStore.fetchGroup(10, 0)
+await apiGroupStore.fetchGroups(10, 0)
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <Menubar v-bind="$attrs" class="mx-1 mt-2 mb-2">
+  <Menubar v-bind="$attrs" class="mx-1 mt-1 mb-1">
     <template #start>
       <Button asChild v-slot="slotProps" severity="contrast" variant="text">
         <RouterLink to="/" :class="slotProps.class">

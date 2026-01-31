@@ -24,7 +24,10 @@
                   :id="`converter-${randomId}-text-${key}`"
                   type="text"
                   fluid
-                  v-tooltip.bottom="item.tooltip"
+                  v-tooltip.bottom="{
+                    value: buildTooltip(key, item),
+                    escape: false,
+                  }"
                 />
                 <label :for="`converter-${randomId}-text-${key}`">{{ item.label }}</label>
               </FloatLabel>
@@ -41,7 +44,10 @@
                   :labelId="`converter-${randomId}-number-${key}-label`"
                   :inputId="`converter-${randomId}-number-${key}`"
                   fluid
-                  v-tooltip.bottom="item.tooltip"
+                  v-tooltip.bottom="{
+                    value: buildTooltip(key, item),
+                    escape: false,
+                  }"
                 />
                 <label :for="`converter-${randomId}-number-${key}`">{{ item.label }}</label>
               </FloatLabel>
@@ -52,7 +58,13 @@
 
             <template v-else-if="item.type === 'switch'">
               <div class="flex gap-2">
-                <ToggleSwitch :name="key" v-tooltip.bottom="item.tooltip" />
+                <ToggleSwitch
+                  :name="key"
+                  v-tooltip.bottom="{
+                    value: buildTooltip(key, item),
+                    escape: false,
+                  }"
+                />
                 <p>{{ item.label }}</p>
               </div>
             </template>
@@ -64,7 +76,10 @@
                   :id="`converter-${randomId}-textarea-${key}`"
                   rows="6"
                   fluid
-                  v-tooltip.bottom="item.tooltip"
+                  v-tooltip.bottom="{
+                    value: buildTooltip(key, item),
+                    escape: false,
+                  }"
                 />
                 <label :for="`converter-${randomId}-textarea-${key}`">{{ item.label }}</label>
               </FloatLabel>
@@ -83,7 +98,10 @@
                   optionLabel="name"
                   optionValue="code"
                   fluid
-                  v-tooltip.bottom="item.tooltip"
+                  v-tooltip.bottom="{
+                    value: buildTooltip(key, item),
+                    escape: false,
+                  }"
                 />
                 <label :for="`converter-${randomId}-target-selector-${key}`">
                   {{ item.label }}
@@ -115,6 +133,7 @@ import {
   converterTargetSelector,
   converterDefaultOptions,
   type ConverterForm,
+  type ConverterField,
 } from '@/converter'
 import type { ConverterOptions } from '@/interfaces'
 
@@ -151,5 +170,25 @@ const randomId = Date.now().toString(36) + Math.random().toString(36).substring(
 // 简易模式
 if (props.simplify) {
   converterForm.value = { ...converterFormsSimplify }
+}
+
+const buildTooltip = <K extends keyof ConverterOptions>(key: K, item: ConverterField): string => {
+  const lines: string[] = []
+
+  // 参数名
+  lines.push(`<code>${key}</code>`)
+
+  // 说明
+  if (item.tooltip) {
+    lines.push(item.tooltip)
+  }
+
+  // 默认值
+  const def = converterDefaultOptions[key]
+  if (def !== '') {
+    lines.push(`默认值：<code>${String(def)}</code>`)
+  }
+
+  return lines.join('<br/>')
 }
 </script>

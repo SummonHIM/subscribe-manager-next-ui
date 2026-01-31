@@ -5,9 +5,11 @@ export interface APIBasicList<T> {
   results: T[]
 }
 
-export interface APIBasicError {
-  detail: string
-}
+export type APIBasicError<T> =
+  | { detail: string }
+  | ({
+      non_field_errors?: string[]
+    } & Partial<Record<keyof T, string[]>>)
 
 interface APIGroupMyself {
   expire: string

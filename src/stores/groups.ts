@@ -1,8 +1,9 @@
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import { ref, type Ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import type { APIBasicError, APIBasicList, APIGroup } from '@/interfaces'
+import type { APIBasicList, APIGroup } from '@/interfaces'
+import { parseAPIError } from '@/exceptions'
 
 export const useAPIGroupStore = defineStore('api_group', () => {
   const group: Ref<APIGroup[]> = ref([])
@@ -14,7 +15,7 @@ export const useAPIGroupStore = defineStore('api_group', () => {
    * @param limit 上限
    * @param offset 偏移
    */
-  async function fetchGroup(limit: number = 10, offset: number = 0) {
+  async function fetchGroups(limit: number = 10, offset: number = 0) {
     try {
       const response = await axios.get<APIBasicList<APIGroup>>(
         `/api/v3/groups/?limit=${limit}&offset=${offset}`,
@@ -23,9 +24,8 @@ export const useAPIGroupStore = defineStore('api_group', () => {
       count.value = response.data.count
       errorMsg.value = null
     } catch (error) {
-      const axiosError = error as AxiosError<APIBasicError>
-      if (axiosError.response?.data.detail) errorMsg.value = axiosError.response.data.detail
-      else errorMsg.value = '未知错误。'
+      const { messages } = parseAPIError<APIGroup>(error)
+      errorMsg.value = messages.join('，')
       console.error(error)
     }
   }
@@ -59,7 +59,7 @@ export const useAPIGroupStore = defineStore('api_group', () => {
     group,
     count,
     errorMsg,
-    fetchGroup,
+    fetchGroups,
     getGroupById,
     isExpired,
   }

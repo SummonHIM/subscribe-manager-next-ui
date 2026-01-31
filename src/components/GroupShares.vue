@@ -27,7 +27,7 @@
 
           <div class="col-span-2 sm:col-span-1 flex justify-center gap-4">
             <Button
-              v-if="info.type === 'link'"
+              v-if="info.type === 'link' && isValidUrl(info.value)"
               icon="pi pi-external-link"
               severity="secondary"
               text
@@ -103,14 +103,26 @@ const displayInfos: DisplayInfos[] = [
 const visibleInfoPasswords: Ref<number[]> = ref([])
 
 /**
+ * 判断是否是合法 URL
+ * @param url 待验证的字符串
+ */
+const isValidUrl = (url: string | null): boolean => {
+  if (!url) return false
+  try {
+    // 如果 new URL(url) 不报错，就是合法 URL
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * 在新建窗口中打开链接
  * @param url 链接
  */
 const openExternalLink = (url: string | null) => {
   if (url) {
-    if (!/^https?:\/\//i.test(url)) {
-      url = 'https://' + url
-    }
     window.open(url, '_blank')
   }
 }

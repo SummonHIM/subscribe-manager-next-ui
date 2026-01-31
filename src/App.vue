@@ -2,15 +2,23 @@
   <template v-if="applicationStore.loginStat">
     <Toast />
 
-    <header>
-      <Suspense>
-        <GlobalMenubar />
-      </Suspense>
-    </header>
+    <div class="min-h-screen flex flex-col">
+      <header>
+        <Suspense>
+          <GlobalMenubar />
+        </Suspense>
+      </header>
 
-    <Suspense>
-      <RouterView />
-    </Suspense>
+      <main class="flex-1">
+        <Suspense>
+          <RouterView />
+        </Suspense>
+      </main>
+
+      <footer>
+        <GlobalFooter />
+      </footer>
+    </div>
   </template>
   <template v-else-if="apiGroupStore.errorMsg !== null">
     <Message severity="error" icon="pi pi-exclamation-triangle">
@@ -27,6 +35,7 @@ import GlobalMenubar from '@/components/GlobalMenubar.vue'
 import { useApplicationStore } from '@/stores/application'
 import { useAppearanceStore } from '@/stores/appearance'
 import { useAPIGroupStore } from '@/stores/groups'
+import GlobalFooter from './components/GlobalFooter.vue'
 
 const applicationStore = useApplicationStore()
 const appearanceStore = useAppearanceStore()

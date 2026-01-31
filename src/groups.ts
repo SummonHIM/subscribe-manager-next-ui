@@ -1,10 +1,9 @@
 import type { Ref } from 'vue'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import type { ToastServiceMethods } from 'primevue/toastservice'
 
-import { useApplicationStore } from './stores/application'
+import { useApplicationStore } from '@/stores/application'
 import type {
-  APIBasicError,
   APIBasicList,
   APIConverterOptions,
   APIGroup,
@@ -15,13 +14,12 @@ import type {
   APIGroupUsers,
   APIGroupUsersEdit,
 } from '@/interfaces'
+import { parseAPIError } from '@/exceptions'
 
 interface ReOrder {
   id: number
   order: number
 }
-
-const applicationStore = useApplicationStore()
 
 /**
  * 交换列表中某下标的位置
@@ -57,13 +55,13 @@ export async function fetchGroup(id: number, errorMsg: Ref<string | null>) {
     errorMsg.value = null
     return response.data
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
-
-    if (axiosError.response?.data.detail) errorMsg.value = axiosError.response.data.detail
-    else errorMsg.value = '未知错误。'
-
+    const { messages } = parseAPIError<APIGroup>(error)
+    if (messages.length) {
+      errorMsg.value = messages.join('，')
+    } else {
+      errorMsg.value = '获取分组信息时发生未知错误。'
+    }
     console.error(error)
-
     return {
       id: -1,
       name: `未知组`,
@@ -74,8 +72,15 @@ export async function fetchGroup(id: number, errorMsg: Ref<string | null>) {
   }
 }
 
+/**
+ * 修改分组名称
+ * @param id 分组ID
+ * @param name 新名称
+ * @param toast PrimeVue 消息对象
+ */
 export async function changeGroupName(id: number, name: string, toast: ToastServiceMethods) {
   try {
+    const applicationStore = useApplicationStore()
     axios.put(
       `/api/v3/groups/${id}/rename/`,
       { name: name },
@@ -87,26 +92,30 @@ export async function changeGroupName(id: number, name: string, toast: ToastServ
       life: 5000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
-    if (axiosError.response?.data.detail)
+    const { messages } = parseAPIError<APIGroup>(error)
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '保存时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '保存时发生错误',
-        detail: axiosError.response.data.detail,
         life: 5000,
       })
-    else
-      toast.add({
-        severity: 'error',
-        summary: '保存时发生错误',
-        life: 5000,
-      })
+    }
+
     console.error(error)
   }
 }
 
 /**
- * 获取分组订阅信息
+ * 获取分组订阅
  * @param groupID 分组ID
  * @param limit 上限
  * @param offset 偏移
@@ -125,21 +134,23 @@ export async function fetchGroupSubscribes(
     )
     return response.data
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
-    if (axiosError.response?.data.detail)
+    const { messages } = parseAPIError<APIGroupSubscribes>(error)
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '获取分组订阅时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '获取分组订阅时发生错误',
-        detail: axiosError.response.data.detail,
         life: 5000,
       })
-    else
-      toast.add({
-        severity: 'error',
-        summary: '获取分组订阅时发生错误',
-        life: 5000,
-      })
-
+    }
     console.error(error)
     return {
       count: 0,
@@ -150,12 +161,19 @@ export async function fetchGroupSubscribes(
   }
 }
 
+/**
+ * 创建新分组订阅
+ * @param groupID 分组ID
+ * @param newSubscribe 新订阅信息
+ * @param toast PrimeVue 消息对象
+ */
 export async function createGroupSubscribe(
   groupID: number,
   newSubscribe: APIGroupSubscribesEdit,
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.post(`/api/v3/groups/${groupID}/subscribes/`, newSubscribe, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -165,16 +183,18 @@ export async function createGroupSubscribe(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupSubscribesEdit>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '新建分组订阅时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '新建分组订阅时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '新建分组订阅时发生错误',
@@ -186,6 +206,13 @@ export async function createGroupSubscribe(
   }
 }
 
+/**
+ * 修改分组订阅
+ * @param groupID 分组ID
+ * @param oldSubscribeID 订阅ID
+ * @param newSubscribe 新订阅信息
+ * @param toast PrimeVue 消息对象
+ */
 export async function modifyGroupSubscribe(
   groupID: number,
   oldSubscribeID: number,
@@ -193,6 +220,7 @@ export async function modifyGroupSubscribe(
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.put(`/api/v3/groups/${groupID}/subscribes/${oldSubscribeID}/`, newSubscribe, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -202,16 +230,18 @@ export async function modifyGroupSubscribe(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupSubscribesEdit>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '修改分组订阅时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '修改分组订阅时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '修改分组订阅时发生错误',
@@ -223,6 +253,13 @@ export async function modifyGroupSubscribe(
   }
 }
 
+/**
+ * 修改分组订阅的转换选项
+ * @param groupID 分组ID
+ * @param subscribeID 订阅ID
+ * @param newConverterOptions 新转换选项
+ * @param toast PrimeVue 消息对象
+ */
 export async function modifyGroupSubscribeConverterOptions(
   groupID: number,
   subscribeID: number,
@@ -230,6 +267,7 @@ export async function modifyGroupSubscribeConverterOptions(
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.put(
       `/api/v3/groups/${groupID}/subscribes/${subscribeID}/converter_options/`,
       newConverterOptions,
@@ -243,16 +281,18 @@ export async function modifyGroupSubscribeConverterOptions(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIConverterOptions>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '修改分组订阅的转换选项时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '修改分组订阅的转换选项时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '修改分组订阅的转换选项时发生错误',
@@ -264,12 +304,19 @@ export async function modifyGroupSubscribeConverterOptions(
   }
 }
 
+/**
+ * 删除分组订阅
+ * @param groupID 分组ID
+ * @param subscribeID 订阅ID
+ * @param toast PrimeVue 消息对象
+ */
 export async function deleteGroupSubscribe(
   groupID: number,
   subscribeID: number,
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.delete(`/api/v3/groups/${groupID}/subscribes/${subscribeID}/`, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -279,16 +326,19 @@ export async function deleteGroupSubscribe(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupSubscribes>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '删除分组订阅时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '删除分组订阅时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
+      // 兜底
       toast.add({
         severity: 'error',
         summary: '删除分组订阅时发生错误',
@@ -300,6 +350,13 @@ export async function deleteGroupSubscribe(
   }
 }
 
+/**
+ * 重新排序分组订阅
+ * @param groupID 分组ID
+ * @param results 最终排序结果
+ * @param first 分页位置（偏移）
+ * @param toast PrimeVue 消息对象
+ */
 export async function reOrderSubscribes(
   groupID: number,
   results: APIGroupSubscribes[],
@@ -307,6 +364,7 @@ export async function reOrderSubscribes(
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     const newOrder: ReOrder[] = results.map((item, index) => ({
       id: item.id,
       order: index + 1 + first,
@@ -334,16 +392,18 @@ export async function reOrderSubscribes(
       })
     }
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<ReOrder[]>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '重新排序分组订阅时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '重新排序分组订阅时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '重新排序分组订阅时发生错误',
@@ -356,7 +416,7 @@ export async function reOrderSubscribes(
 }
 
 /**
- * 获取分组共享账号信息
+ * 获取分组共享账号
  * @param groupID 分组ID
  * @param limit 上限
  * @param offset 偏移
@@ -375,21 +435,27 @@ export async function fetchGroupShares(
     )
     return response.data
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
-    if (axiosError.response?.data.detail)
+    const { messages } = parseAPIError<APIGroupShares>(error)
+
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '获取分组共享账号时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '获取分组共享账号时发生错误',
-        detail: axiosError.response.data.detail,
         life: 5000,
       })
-    else
-      toast.add({
-        severity: 'error',
-        summary: '获取分组共享账号时发生错误',
-        life: 5000,
-      })
+    }
+
     console.error(error)
+
     return {
       count: 0,
       next: null,
@@ -399,12 +465,19 @@ export async function fetchGroupShares(
   }
 }
 
+/**
+ * 创建新分组共享账号
+ * @param groupID 分组ID
+ * @param newShare 新分组共享账号信息
+ * @param toast PrimeVue 消息对象
+ */
 export async function createGroupShare(
   groupID: number,
   newShare: APIGroupSharesEdit,
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.post(`/api/v3/groups/${groupID}/shares/`, newShare, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -414,16 +487,18 @@ export async function createGroupShare(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupSharesEdit>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '新建分组共享账号时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '新建分组共享账号时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '新建分组共享账号时发生错误',
@@ -435,6 +510,13 @@ export async function createGroupShare(
   }
 }
 
+/**
+ * 修改分组共享账号
+ * @param groupID 分组ID
+ * @param oldShareID 旧分组共享账号ID
+ * @param newShare 新分组共享账号信息
+ * @param toast PrimeVue 消息对象
+ */
 export async function modifyGroupShare(
   groupID: number,
   oldShareID: number,
@@ -442,6 +524,7 @@ export async function modifyGroupShare(
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.put(`/api/v3/groups/${groupID}/shares/${oldShareID}/`, newShare, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -451,16 +534,18 @@ export async function modifyGroupShare(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupSharesEdit>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '修改分组共享账号时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '修改分组共享账号时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '修改分组共享账号时发生错误',
@@ -472,12 +557,19 @@ export async function modifyGroupShare(
   }
 }
 
+/**
+ * 删除分组共享账号
+ * @param groupID 分组ID
+ * @param shareID 分组共享账号ID
+ * @param toast PrimeVue 消息对象
+ */
 export async function deleteGroupShare(
   groupID: number,
   shareID: number,
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.delete(`/api/v3/groups/${groupID}/shares/${shareID}/`, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -487,16 +579,19 @@ export async function deleteGroupShare(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupShares>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '删除分组共享账号时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '删除分组共享账号时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
+      // 兜底
       toast.add({
         severity: 'error',
         summary: '删除分组共享账号时发生错误',
@@ -508,6 +603,13 @@ export async function deleteGroupShare(
   }
 }
 
+/**
+ * 重新排序分组共享账号
+ * @param groupID 分组ID
+ * @param results 最终排序结果
+ * @param first 分页位置（偏移）
+ * @param toast PrimeVue 消息对象
+ */
 export async function reOrderShares(
   groupID: number,
   results: APIGroupShares[],
@@ -515,6 +617,7 @@ export async function reOrderShares(
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     const newOrder: ReOrder[] = results.map((item, index) => ({
       id: item.id,
       order: index + 1 + first,
@@ -542,16 +645,18 @@ export async function reOrderShares(
       })
     }
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<ReOrder[]>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '重新排序分组共享账号时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '重新排序分组共享账号时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '重新排序分组共享账号时发生错误',
@@ -564,12 +669,12 @@ export async function reOrderShares(
 }
 
 /**
- * 获取分组订阅信息
+ * 获取分组用户信息
  * @param groupID 分组ID
  * @param limit 上限
  * @param offset 偏移
  * @param toast PrimeVue 消息对象
- * @returns 分组订阅信息
+ * @returns 分组用户信息
  */
 export async function fetchGroupUsers(
   groupID: number,
@@ -583,22 +688,27 @@ export async function fetchGroupUsers(
     )
     return response.data
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
-    if (axiosError.response?.data.detail)
+    const { messages } = parseAPIError<APIGroupUsers>(error)
+
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '获取分组用户时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '获取分组用户时发生错误',
-        detail: axiosError.response.data.detail,
         life: 5000,
       })
-    else
-      toast.add({
-        severity: 'error',
-        summary: '获取分组用户时发生错误',
-        life: 5000,
-      })
+    }
 
     console.error(error)
+
     return {
       count: 0,
       next: null,
@@ -608,6 +718,13 @@ export async function fetchGroupUsers(
   }
 }
 
+/**
+ * 修改分组用户
+ * @param groupID 分组用户
+ * @param groupUserID 分组用户ID
+ * @param newGroupUser 新分组用户信息
+ * @param toast PrimeVue 消息对象
+ */
 export async function modifyGroupUser(
   groupID: number,
   groupUserID: number,
@@ -615,6 +732,7 @@ export async function modifyGroupUser(
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.put(`/api/v3/groups/${groupID}/users/${groupUserID}/`, newGroupUser, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -624,16 +742,19 @@ export async function modifyGroupUser(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupUsersEdit>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '修改分组用户时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '修改分组用户时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
+      // 兜底
       toast.add({
         severity: 'error',
         summary: '修改分组用户时发生错误',
@@ -645,12 +766,19 @@ export async function modifyGroupUser(
   }
 }
 
+/**
+ * 删除分组用户
+ * @param groupID 分组用户
+ * @param groupUserID 分组用户ID
+ * @param toast PrimeVue 消息对象
+ */
 export async function deleteGroupUser(
   groupID: number,
   groupUserID: number,
   toast: ToastServiceMethods,
 ) {
   try {
+    const applicationStore = useApplicationStore()
     await axios.delete(`/api/v3/groups/${groupID}/users/${groupUserID}/`, {
       headers: { 'X-CSRFToken': applicationStore.csrfToken },
     })
@@ -660,16 +788,18 @@ export async function deleteGroupUser(
       life: 3000,
     })
   } catch (error) {
-    const axiosError = error as AxiosError<APIBasicError>
+    const { messages } = parseAPIError<APIGroupUsers>(error)
 
-    if (axiosError.response?.data.detail)
-      toast.add({
-        severity: 'error',
-        summary: '删除分组用户时发生错误',
-        detail: axiosError.response.data.detail,
-        life: 5000,
-      })
-    else {
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '删除分组用户时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
       toast.add({
         severity: 'error',
         summary: '删除分组用户时发生错误',

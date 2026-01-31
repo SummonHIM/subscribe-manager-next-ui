@@ -11,7 +11,7 @@
     paginator
     lazy
   >
-    <Column field="id" header="ID"></Column>
+    <!-- <Column field="id" header="ID"></Column> -->
     <Column field="user" header="用户 ID"></Column>
     <Column field="username" header="用户名"></Column>
     <Column field="expire" header="过期日">
