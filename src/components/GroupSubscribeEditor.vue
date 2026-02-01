@@ -132,6 +132,7 @@
 <script setup lang="ts">
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
 
 import {
@@ -150,7 +151,6 @@ import type {
   APIGroupSubscribesEdit,
   ConverterOptions,
 } from '@/interfaces'
-import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import ConverterForm from '@/components/ConverterForm.vue'
 import { converterDefaultOptions, convertFromApiOptions, convertToApiOptions } from '@/converter'
 

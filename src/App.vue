@@ -32,10 +32,10 @@ import { onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 
 import GlobalMenubar from '@/components/GlobalMenubar.vue'
+import GlobalFooter from '@/components/GlobalFooter.vue'
 import { useApplicationStore } from '@/stores/application'
 import { useAppearanceStore } from '@/stores/appearance'
 import { useAPIGroupStore } from '@/stores/groups'
-import GlobalFooter from './components/GlobalFooter.vue'
 
 const applicationStore = useApplicationStore()
 const appearanceStore = useAppearanceStore()

@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+
 import { useAPIGroupStore } from '@/stores/groups'
 import HomeTitle from '@/components/HomeTitle.vue'
 import HomeGroupPanel from '@/components/HomeGroupPanel.vue'

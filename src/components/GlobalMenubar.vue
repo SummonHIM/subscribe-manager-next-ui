@@ -47,10 +47,16 @@ import { useAppearanceStore } from '@/stores/appearance'
 const toast = useToast()
 const applicationStore = useApplicationStore()
 const appearanceStore = useAppearanceStore()
+
+// 头像
 const userGravatarUrl = await genGravatar(
   applicationStore.user?.email ? applicationStore.user.email : '',
 )
+
+// 登出对话框
 const logoutVisible = ref(false)
+
+// 菜单实际内容
 const userMenuMethods: Ref<TieredMenuMethods | null> = ref(null)
 const userMenuItems: Ref<MenuItem[]> = ref([
   {

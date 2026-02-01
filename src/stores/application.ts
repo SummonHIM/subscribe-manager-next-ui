@@ -1,6 +1,6 @@
+import axios from 'axios'
 import { ref, type Ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
 
 import type { APICsrf, APIUser } from '@/interfaces'
 import { parseAPIError } from '@/exceptions'
@@ -12,11 +12,16 @@ export const useApplicationStore = defineStore('application', () => {
   const errorMsg: Ref<string | null> = ref(null)
   const csrfToken: Ref<string> = ref('')
 
+  /** 重置 */
   function $reset() {
     user.value = null
     loginStat.value = false
   }
 
+  /**
+   * 获取当前用户信息
+   * @returns 用户信息
+   */
   async function fetchUser() {
     try {
       const response = await axios.get<APIUser>('/api/v3/user/')
@@ -44,6 +49,7 @@ export const useApplicationStore = defineStore('application', () => {
     }
   }
 
+  /** 登出用户 */
   async function logoutUser() {
     try {
       const response = await axios.post(
@@ -62,6 +68,7 @@ export const useApplicationStore = defineStore('application', () => {
     }
   }
 
+  /** 获取跨域令牌 */
   async function fetchCsrfToken() {
     try {
       const response = await axios.get<APICsrf>('/api/v3/csrf/')

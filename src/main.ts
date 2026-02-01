@@ -10,6 +10,7 @@ import App from './App.vue'
 import router from './router'
 
 import '@/assets/index.css'
+import 'nprogress/nprogress.css'
 import { zhCNLocale } from './locale'
 
 const app = createApp(App)

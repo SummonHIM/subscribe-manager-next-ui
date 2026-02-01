@@ -78,6 +78,7 @@ interface DisplayInfos {
 const toast = useToast()
 const props = defineProps<GroupSubscribesProps>()
 
+// 准备显示的信息
 const displayInfos: DisplayInfos[] = [
   {
     label: '官网',
@@ -100,6 +101,7 @@ const displayInfos: DisplayInfos[] = [
     value: props.share.manage_aff,
   },
 ]
+// 显示密码内容的具体循环下标
 const visibleInfoPasswords: Ref<number[]> = ref([])
 
 /**

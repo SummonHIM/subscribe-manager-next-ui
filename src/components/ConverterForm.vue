@@ -126,6 +126,7 @@
 <script setup lang="ts">
 import { ref, type Ref } from 'vue'
 import type { FormResetEvent, FormSubmitEvent } from '@primevue/forms/form'
+
 import {
   converterFormResolver,
   converterFormsFull,
@@ -148,7 +149,10 @@ interface ConverterFieldProps {
 const props = withDefaults(defineProps<ConverterFieldProps>(), {
   simplify: false,
 })
+
+// 转换目标
 const targetSelecter = [...converterTargetSelector]
+// 预定义行列
 const colSpanMap: Record<number, string> = {
   1: 'sm:col-span-1',
   2: 'sm:col-span-2',
@@ -163,8 +167,11 @@ const colSpanMap: Record<number, string> = {
   11: 'sm:col-span-11',
   12: 'sm:col-span-12',
 }
+// 表单初始值
 const initialValues = props.initialValues ?? { ...converterDefaultOptions }
+// 表单要显示的内容
 const converterForm: Ref<ConverterForm> = ref({ ...converterFormsFull })
+// 随机ID
 const randomId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8)
 
 // 简易模式
@@ -172,6 +179,11 @@ if (props.simplify) {
   converterForm.value = { ...converterFormsSimplify }
 }
 
+/**
+ * 生成提示
+ * @param key 表单键
+ * @param item 表单内容
+ */
 const buildTooltip = <K extends keyof ConverterOptions>(key: K, item: ConverterField): string => {
   const lines: string[] = []
 

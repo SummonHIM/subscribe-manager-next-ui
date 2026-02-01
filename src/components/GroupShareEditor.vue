@@ -135,6 +135,7 @@
 <script setup lang="ts">
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
 
 import {
@@ -146,7 +147,6 @@ import {
   reOrderShares,
 } from '@/groups'
 import type { APIBasicList, APIGroupShares, APIGroupSharesEdit } from '@/interfaces'
-import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 
 interface GroupSharesEditorProps {
   groupID: number

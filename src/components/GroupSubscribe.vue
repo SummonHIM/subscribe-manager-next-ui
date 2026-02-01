@@ -105,10 +105,10 @@ import { useToast } from 'primevue/usetoast'
 import type { MenuItem } from 'primevue/menuitem'
 import type { TieredMenuMethods } from 'primevue'
 
-import { useApplicationStore } from '@/stores/application'
-import { useConverterStore } from '@/stores/converter'
-import type { APIGroupSubscribes, APIUserSubscribeTokens } from '@/interfaces'
 import { parseAPIError } from '@/exceptions'
+import { useConverterStore } from '@/stores/converter'
+import { useApplicationStore } from '@/stores/application'
+import type { APIGroupSubscribes, APIUserSubscribeTokens } from '@/interfaces'
 
 interface GroupSubscribesProps {
   subscribe: APIGroupSubscribes

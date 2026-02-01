@@ -87,11 +87,11 @@
 <script setup lang="ts">
 import { ref, type Ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import type { FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent } from 'primevue/datatable'
 
 import { deleteGroupUser, fetchGroupUsers, modifyGroupUser } from '@/groups'
 import type { APIBasicList, APIGroupUsers, APIGroupUsersEdit } from '@/interfaces'
-import type { FormSubmitEvent } from '@primevue/forms/form'
 
 interface GroupUserEditorProps {
   groupID: number
@@ -107,15 +107,18 @@ const groupUsers: Ref<APIBasicList<APIGroupUsers>> = ref({
   results: [],
 })
 
+// 分页
 const tablePaginatorRows = ref(10)
 const tablePaginatorFirst = ref(0)
 
+// 编辑对话框
 const editorVisible = ref(false)
 const editorInitialValues: Ref<APIGroupUsersEdit> = ref({
   expire: '',
 })
 const editorGroupUserID: Ref<number> = ref(-1)
 
+// 删除对话框
 const deleteVisible = ref(false)
 const deleteGroupUserID: Ref<number> = ref(-1)
 
@@ -218,6 +221,7 @@ const onTablePaginatorChange = async (event: DataTablePageEvent) => {
 //   return !isNaN(time)
 // }
 
+// 获取一遍
 groupUsers.value = await fetchGroupUsers(
   props.groupID,
   tablePaginatorRows.value,

@@ -15,6 +15,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+
 import type { GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
 
 defineOptions({
