@@ -106,7 +106,7 @@
   </Dialog>
 
   <Dialog v-model:visible="deleteVisible" modal :style="{ width: '30rem' }" header="删除确认">
-    <p>你确定要删除该订阅吗？</p>
+    <p>确定要删除该订阅吗？</p>
 
     <template #footer>
       <Button label="取消" icon="pi pi-times" text @click="deleteVisible = false" />

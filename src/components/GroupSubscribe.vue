@@ -38,10 +38,10 @@
         </div>
       </div>
 
-      <template v-if="props.subscribe.converter">
-        <Card>
-          <template #title><p class="text-base">其他选项</p></template>
-          <template #content>
+      <Card>
+        <template #title><p class="text-base">其他选项</p></template>
+        <template #content>
+          <template v-if="props.subscribe.converter">
             <Message
               v-if="alertServerConverterBackend() || alertServerConverterOption()"
               severity="warn"
@@ -61,27 +61,31 @@
                 。
               </template>
             </Message>
-            <div class="sm:flex items-center gap-4 mt-4">
+          </template>
+
+          <div class="sm:flex items-center gap-4 mt-4">
+            <template v-if="props.subscribe.converter">
               <div class="flex gap-2 mb-3 sm:mb-0">
                 <ToggleSwitch v-model="displayUrlOpenConverter" />
                 <p>使用订阅转换</p>
               </div>
-              <div class="flex gap-2 mb-2 sm:mb-0">
-                <ToggleSwitch v-model="displayOriginUrl" />
-                <p>显示原始订阅</p>
-              </div>
-              <Button
-                label="刷新令牌"
-                severity="secondary"
-                variant="text"
-                icon="pi pi-refresh"
-                @click="genConvertedURL(true)"
-              />
-              <!-- <p class="font-thin">更多选项可导入到订阅转换器中继续编辑！</p> -->
+            </template>
+
+            <div class="flex gap-2 mb-2 sm:mb-0">
+              <ToggleSwitch v-model="displayOriginUrl" />
+              <p>显示原始订阅</p>
             </div>
-          </template>
-        </Card>
-      </template>
+            <Button
+              label="刷新令牌"
+              severity="secondary"
+              variant="text"
+              icon="pi pi-refresh"
+              @click="refreshTokenDialogOpen = true"
+            />
+            <!-- <p class="font-thin">更多选项可导入到订阅转换器中继续编辑！</p> -->
+          </div>
+        </template>
+      </Card>
     </template>
   </Card>
 
@@ -94,6 +98,21 @@
       fluid
     />
     <Image :src="qrCodeDialogImageURL" />
+  </Dialog>
+
+  <Dialog
+    v-model:visible="refreshTokenDialogOpen"
+    modal
+    :style="{ width: '30rem' }"
+    header="刷新令牌确认"
+  >
+    <p>确定要刷新该订阅链接的令牌吗？</p>
+    <p>刷新后，需要重新导入该订阅链接，才能正常更新！</p>
+
+    <template #footer>
+      <Button label="取消" icon="pi pi-times" text @click="refreshTokenDialogOpen = false" />
+      <Button label="确定" icon="pi pi-check" @click="genConvertedURL(true)" />
+    </template>
   </Dialog>
 </template>
 
@@ -239,6 +258,9 @@ const qrCodeDialogSelecter = [
 ]
 const qrCodeDialogImageURL = ref('')
 
+// 刷新令牌对话框
+const refreshTokenDialogOpen = ref(false)
+
 /** 生成二维码链接 */
 const getQrCodeURL = async () => {
   return await QRCode.toDataURL(
@@ -308,7 +330,7 @@ function createImportScheme(type: string, url: string | undefined, name: string 
  * @param refresh 刷新令牌
  */
 const genConvertedURL = async (refresh: boolean = false) => {
-  if (!props.subscribe.converter || displayOriginUrl.value) return
+  if (displayOriginUrl.value) return
 
   try {
     if (refresh) {
@@ -327,7 +349,10 @@ const genConvertedURL = async (refresh: boolean = false) => {
 
     displayUrl.value = new URL('/api/subscribe', window.location.origin)
     displayUrl.value.searchParams.set('token', tokenCache)
-    if (!displayUrlOpenConverter.value) displayUrl.value.searchParams.set('converter', 'false')
+    if (props.subscribe.converter && !displayUrlOpenConverter.value)
+      displayUrl.value.searchParams.set('converter', 'false')
+
+    refreshTokenDialogOpen.value = false
   } catch (error) {
     const { messages } = parseAPIError<APIUserSubscribeTokens>(error)
 

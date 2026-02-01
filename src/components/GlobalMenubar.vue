@@ -25,7 +25,7 @@
   </Menubar>
 
   <Dialog v-model:visible="logoutVisible" modal :style="{ width: '30rem' }" header="登出确认">
-    <p>你确定要登出吗？</p>
+    <p>确定要登出吗？</p>
     <form class="flex justify-end gap-2 mt-4" action="/oidc/logout/" method="POST">
       <input type="hidden" name="csrfmiddlewaretoken" :value="applicationStore.csrfToken" />
       <Button label="取消" icon="pi pi-times" text @click="logoutVisible = false" />
