@@ -1,5 +1,7 @@
+import { type Ref, computed, ref } from 'vue'
+
 import { defineStore } from 'pinia'
-import { computed, ref, type Ref } from 'vue'
+import { validate as validateUUID } from 'uuid'
 
 import type { APIConverterOptions, ConverterOptions } from '@/interfaces'
 
@@ -67,13 +69,14 @@ export const useConverterStore = defineStore(
       const host = window.location.origin
       const params = new URLSearchParams()
 
+      // 令牌为空，返回为空
       if (tokens.value.length <= 0) {
         return ''
       }
 
-      // token 用 | 分隔
+      // 令牌不为空，则以|分隔
       if (tokens.value.length) {
-        const filteredTokens = tokens.value.filter((token) => token !== '') // 或 filter(Boolean)
+        const filteredTokens = tokens.value.filter((token) => token && validateUUID(token)) // 检测是否为合法的UUID
         if (filteredTokens.length) {
           params.set('token', filteredTokens.join('|'))
         } else {
@@ -87,7 +90,7 @@ export const useConverterStore = defineStore(
 
         // 判断是否为空
         if (value !== null) {
-          // 对 boolean 类型直接用 1/0 或 true/false
+          // 对 boolean 类型直接用 true/false
           let val: string
           if (typeof value === 'boolean') val = value ? 'true' : 'false'
           else if (value !== null && value !== undefined) val = String(value)

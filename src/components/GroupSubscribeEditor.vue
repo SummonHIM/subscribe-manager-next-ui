@@ -130,11 +130,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { type Ref, ref } from 'vue'
+
 import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
+import { useToast } from 'primevue/usetoast'
 
+import ConverterForm from '@/components/ConverterForm.vue'
+import { convertFromApiOptions, convertToApiOptions, converterDefaultOptions } from '@/converter'
 import {
   createGroupSubscribe,
   deleteGroupSubscribe,
@@ -151,8 +154,6 @@ import type {
   APIGroupSubscribesEdit,
   ConverterOptions,
 } from '@/interfaces'
-import ConverterForm from '@/components/ConverterForm.vue'
-import { converterDefaultOptions, convertFromApiOptions, convertToApiOptions } from '@/converter'
 
 interface GroupSubscribesEditorProps {
   groupID: number

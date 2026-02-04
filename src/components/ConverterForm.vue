@@ -98,7 +98,7 @@
                   optionLabel="name"
                   optionValue="code"
                   fluid
-                  v-tooltip.bottom="{
+                  v-tooltip.top="{
                     value: buildTooltip(key, item),
                     escape: false,
                   }"
@@ -124,17 +124,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
+import { type Ref, ref } from 'vue'
+
 import type { FormResetEvent, FormSubmitEvent } from '@primevue/forms/form'
 
 import {
+  type ConverterField,
+  type ConverterForm,
+  converterDefaultOptions,
   converterFormResolver,
   converterFormsFull,
   converterFormsSimplify,
   converterTargetSelector,
-  converterDefaultOptions,
-  type ConverterForm,
-  type ConverterField,
 } from '@/converter'
 import type { ConverterOptions } from '@/interfaces'
 

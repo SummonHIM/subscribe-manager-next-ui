@@ -1,6 +1,6 @@
 import type { FormResolverOptions } from '@primevue/forms/form'
 
-import type { ConverterOptions, APIConverterOptions } from '@/interfaces'
+import type { APIConverterOptions, ConverterOptions } from '@/interfaces'
 
 export interface ConverterField {
   label: string

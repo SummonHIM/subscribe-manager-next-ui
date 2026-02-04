@@ -1,9 +1,10 @@
+import { type Ref, ref } from 'vue'
+
 import axios from 'axios'
-import { ref, type Ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import type { APICsrf, APIUser } from '@/interfaces'
 import { parseAPIError } from '@/exceptions'
+import type { APICsrf, APIUser } from '@/interfaces'
 
 /** 主应用储存 */
 export const useApplicationStore = defineStore('application', () => {

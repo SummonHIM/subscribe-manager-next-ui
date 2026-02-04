@@ -56,18 +56,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, type Ref } from 'vue'
+import { type Ref, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
-import { Form, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
 
-import { useAPIGroupStore } from '@/stores/groups'
-import type { APIGroup } from '@/interfaces'
-import { changeGroupName, fetchGroup } from '@/groups'
-import GroupSubscribeEditor from '@/components/GroupSubscribeEditor.vue'
-import GroupShareEditor from '@/components/GroupShareEditor.vue'
+import { Form, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
+import { useToast } from 'primevue/usetoast'
+
 import GlobalToolbar, { type GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
+import GroupShareEditor from '@/components/GroupShareEditor.vue'
+import GroupSubscribeEditor from '@/components/GroupSubscribeEditor.vue'
 import GroupUsersEditor from '@/components/GroupUsersEditor.vue'
+import { changeGroupName, fetchGroup } from '@/groups'
+import type { APIGroup } from '@/interfaces'
+import { useAPIGroupStore } from '@/stores/groups'
 
 defineOptions({
   name: 'GroupEditorPage',

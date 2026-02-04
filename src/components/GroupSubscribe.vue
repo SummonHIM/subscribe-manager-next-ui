@@ -76,6 +76,7 @@
               <p>显示原始订阅</p>
             </div>
             <Button
+              v-if="!displayOriginUrl"
               label="刷新令牌"
               severity="secondary"
               variant="text"
@@ -111,23 +112,24 @@
 
     <template #footer>
       <Button label="取消" icon="pi pi-times" text @click="refreshTokenDialogOpen = false" />
-      <Button label="确定" icon="pi pi-check" @click="genConvertedURL(true)" />
+      <Button label="确定" icon="pi pi-check" @click="genSubscribeURL(true)" />
     </template>
   </Dialog>
 </template>
 
 <script setup lang="ts">
+import { type Ref, ref, watch } from 'vue'
+
 import axios from 'axios'
-import QRCode from 'qrcode'
-import { ref, watch, type Ref } from 'vue'
-import { useToast } from 'primevue/usetoast'
-import type { MenuItem } from 'primevue/menuitem'
 import type { TieredMenuMethods } from 'primevue'
+import type { MenuItem } from 'primevue/menuitem'
+import { useToast } from 'primevue/usetoast'
 
 import { parseAPIError } from '@/exceptions'
-import { useConverterStore } from '@/stores/converter'
-import { useApplicationStore } from '@/stores/application'
 import type { APIGroupSubscribes, APIUserSubscribeTokens } from '@/interfaces'
+import { useApplicationStore } from '@/stores/application'
+import { useConverterStore } from '@/stores/converter'
+import { createImportScheme, getQrCodeURL } from '@/subscribes'
 
 interface GroupSubscribesProps {
   subscribe: APIGroupSubscribes
@@ -139,14 +141,15 @@ const converterStore = useConverterStore()
 const props = defineProps<GroupSubscribesProps>()
 
 // 实际显示的订阅链接
-let tokenCache: string | null = null
-const displayUrl: Ref<URL> = ref(new URL(props.subscribe.url))
-const displayOriginUrl: Ref<boolean> = ref(false)
-const displayUrlOpenConverter: Ref<boolean> = ref(props.subscribe.converter)
+let tokenCache: string | null = null // 令牌缓存
+const displayUrl: Ref<URL> = ref(new URL(props.subscribe.url)) // 显示在输入框中的订阅链接
+const displayOriginUrl: Ref<boolean> = ref(false) // 是否显示原始订阅按钮
+const displayUrlOpenConverter: Ref<boolean> = ref(props.subscribe.converter) // 是否使用订阅转换按钮
 
 // 导入菜单
-const gsImportMenuMethods: Ref<TieredMenuMethods | null> = ref(null)
-const gsImportMenuItems: MenuItem[] = [
+const gsImportMenuMethods: Ref<TieredMenuMethods | null> = ref(null) // 导入菜单方法
+const menuItemsOriginal: MenuItem[] = [
+  // 无转换时的菜单
   {
     label: '剪切板',
     command: async () => {
@@ -169,112 +172,97 @@ const gsImportMenuItems: MenuItem[] = [
     },
   },
 ]
-if (props.subscribe.converter) {
-  gsImportMenuItems.push(
-    ...[
-      {
-        label: 'Clash',
-        command: () => {
-          window.location.href = createImportScheme(
-            'clash',
-            displayUrl.value.toString(),
-            props.subscribe.name,
-          )
-        },
-      },
-      {
-        label: 'Surge',
-        command: () => {
-          window.location.href = createImportScheme(
-            'surge',
-            displayUrl.value.toString(),
-            props.subscribe.name,
-          )
-        },
-      },
-      {
-        label: 'Surfboard',
-        command: () => {
-          window.location.href = createImportScheme(
-            'surfboard',
-            displayUrl.value.toString(),
-            props.subscribe.name,
-          )
-        },
-      },
-      {
-        label: 'sing-box',
-        command: () => {
-          window.location.href = createImportScheme(
-            'singbox',
-            displayUrl.value.toString(),
-            props.subscribe.name,
-          )
-        },
-      },
-      {
-        label: 'Quantumult X',
-        command: () => {
-          window.location.href = createImportScheme(
-            'quantumultx',
-            displayUrl.value.toString(),
-            props.subscribe.name,
-          )
-        },
-      },
-      {
-        label: '二维码',
-        command: () => {
-          qrCodeDialogOpen.value = true
-        },
-      },
-      {
-        label: '订阅转换器',
-        command: () => {
-          if (tokenCache) {
-            converterStore.addToken(tokenCache)
-            toast.add({
-              severity: 'success',
-              summary: '添加成功',
-              detail: '已成功添加令牌到订阅转换器中',
-              life: 2000,
-            })
-          }
-        },
-      },
-    ],
-  )
-}
+const menuItemsConverter: MenuItem[] = [
+  //有转换时的菜单
+  {
+    label: 'Clash',
+    command: () => {
+      window.location.href = createImportScheme(
+        'clash',
+        displayUrl.value.toString(),
+        props.subscribe.name,
+      )
+    },
+  },
+  {
+    label: 'Surge',
+    command: () => {
+      window.location.href = createImportScheme(
+        'surge',
+        displayUrl.value.toString(),
+        props.subscribe.name,
+      )
+    },
+  },
+  {
+    label: 'Surfboard',
+    command: () => {
+      window.location.href = createImportScheme(
+        'surfboard',
+        displayUrl.value.toString(),
+        props.subscribe.name,
+      )
+    },
+  },
+  {
+    label: 'sing-box',
+    command: () => {
+      window.location.href = createImportScheme(
+        'singbox',
+        displayUrl.value.toString(),
+        props.subscribe.name,
+      )
+    },
+  },
+  {
+    label: 'Quantumult X',
+    command: () => {
+      window.location.href = createImportScheme(
+        'quantumultx',
+        displayUrl.value.toString(),
+        props.subscribe.name,
+      )
+    },
+  },
+  {
+    label: '二维码',
+    command: () => {
+      qrCodeDialogOpen.value = true
+    },
+  },
+  {
+    label: '融合订阅转换器',
+    command: () => {
+      if (tokenCache) {
+        converterStore.addToken(tokenCache)
+        toast.add({
+          severity: 'success',
+          summary: '添加成功',
+          detail: '已成功添加令牌到融合订阅转换器中',
+          life: 2000,
+        })
+      }
+    },
+  },
+  ...menuItemsOriginal,
+]
+const gsImportMenuItems: Ref<MenuItem[]> = ref(menuItemsOriginal) // 导入菜单内容
 
 // 导入二维码对话框
-const qrCodeDialogOpen = ref(false)
-const qrCodeDialogSelected = ref({ name: 'Clash', code: 'clash' })
+const qrCodeDialogOpen = ref(false) // 是否打开
+const qrCodeDialogSelected = ref({ name: 'Clash', code: 'clash' }) // 已选内容
 const qrCodeDialogSelecter = [
+  // 所有内容
   { name: 'Clash', code: 'clash' },
   { name: 'Surge', code: 'surge' },
   { name: 'Surfboard', code: 'surfboard' },
   { name: 'sing-box', code: 'singbox' },
   { name: 'Quantumult X', code: 'quantumultx' },
 ]
-const qrCodeDialogImageURL = ref('')
+const qrCodeDialogImageURL = ref('') // 生成的二维码图片
 
 // 刷新令牌对话框
 const refreshTokenDialogOpen = ref(false)
-
-/** 生成二维码链接 */
-const getQrCodeURL = async () => {
-  return await QRCode.toDataURL(
-    createImportScheme(
-      qrCodeDialogSelected.value.code,
-      displayUrl.value.toString(),
-      props.subscribe.name,
-    ),
-    {
-      width: 260,
-      margin: 2,
-    },
-  )
-}
 
 /**
  * 切换导入菜单
@@ -285,55 +273,21 @@ const toggleGsImportMenu = (event: Event) => {
 }
 
 /**
- * 生成导入URL Scheme
- * @param type 类型
- * @param url 链接
- * @param name 名称
- */
-function createImportScheme(type: string, url: string | undefined, name: string | undefined) {
-  if (!url || !name) return ''
-
-  switch (type) {
-    case 'clash':
-      return (
-        'clash://install-config?url=' +
-        encodeURIComponent(url) +
-        '&name=' +
-        encodeURIComponent(name)
-      )
-    case 'surge':
-      return 'surge:///install-config?url=' + encodeURIComponent(url)
-    case 'surfboard':
-      return 'surfboard:///install-config?url=' + encodeURIComponent(url)
-    case 'singbox':
-      return (
-        'sing-box://import-remote-profile?url=' +
-        encodeURIComponent(url) +
-        '#' +
-        encodeURIComponent(name)
-      )
-    case 'quantumultx':
-      return (
-        'quantumult-x:///update-configuration?remote-resource={%22server_remote%22:[%22' +
-        encodeURIComponent(url) +
-        ',tag=' +
-        encodeURIComponent(name) +
-        ']}'
-      )
-    default:
-      return ''
-  }
-}
-
-/**
  * 生成订阅转换链接
  * @param refresh 刷新令牌
  */
-const genConvertedURL = async (refresh: boolean = false) => {
-  if (displayOriginUrl.value) return
+const genSubscribeURL = async (refresh: boolean = false) => {
+  if (displayOriginUrl.value) {
+    // 显示原始订阅，菜单为原始菜单
+    gsImportMenuItems.value = menuItemsOriginal
+    displayUrl.value = new URL(props.subscribe.url)
+    return
+  }
 
   try {
+    // 从服务器获取令牌
     if (refresh) {
+      // 刷新新令牌逻辑
       const response = await axios.put<APIUserSubscribeTokens>(
         `/api/v3/token/${props.subscribe.id}/`,
         {},
@@ -341,17 +295,28 @@ const genConvertedURL = async (refresh: boolean = false) => {
       )
       tokenCache = response.data.token
     } else if (!tokenCache) {
+      // 如果令牌缓存为空则重新获取
       const response = await axios.get<APIUserSubscribeTokens>(
         `/api/v3/token/${props.subscribe.id}/`,
       )
       tokenCache = response.data.token
     }
 
+    // 构造URL结构
     displayUrl.value = new URL('/api/subscribe', window.location.origin)
     displayUrl.value.searchParams.set('token', tokenCache)
-    if (props.subscribe.converter && !displayUrlOpenConverter.value)
-      displayUrl.value.searchParams.set('converter', 'false')
 
+    // 检测是否关闭订阅转换
+    if (props.subscribe.converter && !displayUrlOpenConverter.value) {
+      // 关闭了，原始菜单
+      gsImportMenuItems.value = menuItemsOriginal
+      displayUrl.value.searchParams.set('converter', 'false')
+    } else if (props.subscribe.converter && displayUrlOpenConverter.value) {
+      // 没关闭则使用转换菜单
+      gsImportMenuItems.value = menuItemsConverter
+    }
+
+    // 最后把刷新令牌的对话框关掉
     refreshTokenDialogOpen.value = false
   } catch (error) {
     const { messages } = parseAPIError<APIUserSubscribeTokens>(error)
@@ -404,22 +369,25 @@ function alertServerConverterBackend(): boolean {
 watch(
   displayOriginUrl,
   () => {
-    if (displayOriginUrl.value) displayUrl.value = new URL(props.subscribe.url)
-    else genConvertedURL()
+    genSubscribeURL()
   },
   { immediate: true },
 )
 
 // 使用订阅转换监听器
 watch(displayUrlOpenConverter, () => {
-  genConvertedURL()
+  genSubscribeURL()
 })
 
 // 二维码对话框客户端类型监听器
 watch(
   qrCodeDialogSelected,
   async () => {
-    qrCodeDialogImageURL.value = await getQrCodeURL()
+    qrCodeDialogImageURL.value = await getQrCodeURL(
+      qrCodeDialogSelected.value.code,
+      displayUrl.value.toString(),
+      props.subscribe.name,
+    )
   },
   { immediate: true },
 )

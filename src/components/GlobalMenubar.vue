@@ -35,14 +35,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
+import { type Ref, ref } from 'vue'
+
 import type { TieredMenuMethods } from 'primevue'
 import type { MenuItem } from 'primevue/menuitem'
 import { useToast } from 'primevue/usetoast'
 
 import FavIcon from '@/assets/favicon.png'
-import { useApplicationStore } from '@/stores/application'
 import { useAppearanceStore } from '@/stores/appearance'
+import { useApplicationStore } from '@/stores/application'
 
 const toast = useToast()
 const applicationStore = useApplicationStore()

@@ -85,10 +85,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { type Ref, ref } from 'vue'
+
 import type { FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent } from 'primevue/datatable'
+import { useToast } from 'primevue/usetoast'
 
 import { deleteGroupUser, fetchGroupUsers, modifyGroupUser } from '@/groups'
 import type { APIBasicList, APIGroupUsers, APIGroupUsersEdit } from '@/interfaces'

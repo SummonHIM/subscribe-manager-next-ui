@@ -60,7 +60,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
+import { type Ref, ref } from 'vue'
+
 import { useToast } from 'primevue/usetoast'
 
 import type { APIGroupShares } from '@/interfaces'

@@ -1,8 +1,9 @@
 import type { Ref } from 'vue'
+
 import axios from 'axios'
 import type { ToastServiceMethods } from 'primevue/toastservice'
 
-import { useApplicationStore } from '@/stores/application'
+import { parseAPIError } from '@/exceptions'
 import type {
   APIBasicList,
   APIConverterOptions,
@@ -14,7 +15,7 @@ import type {
   APIGroupUsers,
   APIGroupUsersEdit,
 } from '@/interfaces'
-import { parseAPIError } from '@/exceptions'
+import { useApplicationStore } from '@/stores/application'
 
 interface ReOrder {
   id: number

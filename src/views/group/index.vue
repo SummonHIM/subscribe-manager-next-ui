@@ -96,16 +96,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, type Ref } from 'vue'
+import { type Ref, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+
 import { useToast } from 'primevue/usetoast'
 
-import { useAPIGroupStore } from '@/stores/groups'
+import GlobalToolbar, { type GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
 import GroupShares from '@/components/GroupShares.vue'
 import GroupSubscribe from '@/components/GroupSubscribe.vue'
-import GlobalToolbar, { type GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
-import type { APIBasicList, APIGroup, APIGroupShares, APIGroupSubscribes } from '@/interfaces'
 import { fetchGroup, fetchGroupShares, fetchGroupSubscribes } from '@/groups'
+import type { APIBasicList, APIGroup, APIGroupShares, APIGroupSubscribes } from '@/interfaces'
+import { useAPIGroupStore } from '@/stores/groups'
 
 defineOptions({
   name: 'GroupResourcesPage',

@@ -1,9 +1,10 @@
+import { type Ref, ref } from 'vue'
+
 import axios from 'axios'
-import { ref, type Ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import type { APIBasicList, APIGroup } from '@/interfaces'
 import { parseAPIError } from '@/exceptions'
+import type { APIBasicList, APIGroup } from '@/interfaces'
 
 export const useAPIGroupStore = defineStore('api_group', () => {
   const group: Ref<APIGroup[]> = ref([])

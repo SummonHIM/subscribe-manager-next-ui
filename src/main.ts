@@ -1,17 +1,18 @@
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import PrimeVue from 'primevue/config'
-import Aura from '@primeuix/themes/aura'
-import { definePreset } from '@primeuix/themes'
-import ToastService from 'primevue/toastservice'
-import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
-import App from './App.vue'
-import router from './router'
+import { definePreset } from '@primeuix/themes'
+import Aura from '@primeuix/themes/aura'
+import 'nprogress/nprogress.css'
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
 
 import '@/assets/index.css'
-import 'nprogress/nprogress.css'
+
+import App from './App.vue'
 import { zhCNLocale } from './locale'
+import router from './router'
 
 const app = createApp(App)
 const pinia = createPinia()
