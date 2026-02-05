@@ -212,8 +212,8 @@ const editorResolver = ({ values }: FormResolverOptions) => {
   const urlPattern = /^https?:\/\/.+$/i
   if (!url || url.trim().length === 0) {
     errors.url = [{ message: '请填写上游订阅链接' }]
-  } else if (url.length > 150) {
-    errors.url = [{ message: '上游订阅链接长度不得大于 150。' }]
+  } else if (url.length > 255) {
+    errors.url = [{ message: '上游订阅链接长度不得大于 255。' }]
   } else if (!urlPattern.test(url)) {
     errors.url = [{ message: '请输入合法的订阅链接。' }]
   } else {
