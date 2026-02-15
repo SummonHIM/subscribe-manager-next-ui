@@ -101,9 +101,7 @@ import { useRoute } from 'vue-router'
 
 import { useToast } from 'primevue/usetoast'
 
-import GlobalToolbar, { type GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
-import GroupShares from '@/components/GroupShares.vue'
-import GroupSubscribe from '@/components/GroupSubscribe.vue'
+import { type GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
 import { fetchGroup, fetchGroupShares, fetchGroupSubscribes } from '@/groups'
 import type { APIBasicList, APIGroup, APIGroupShares, APIGroupSubscribes } from '@/interfaces'
 import { useAPIGroupStore } from '@/stores/groups'

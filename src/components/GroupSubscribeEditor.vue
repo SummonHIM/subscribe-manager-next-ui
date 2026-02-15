@@ -136,7 +136,6 @@ import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
 import { useToast } from 'primevue/usetoast'
 
-import ConverterForm from '@/components/ConverterForm.vue'
 import { convertFromApiOptions, convertToApiOptions, converterDefaultOptions } from '@/converter'
 import {
   createGroupSubscribe,
