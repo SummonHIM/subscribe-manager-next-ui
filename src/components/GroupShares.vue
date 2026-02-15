@@ -6,53 +6,48 @@
 
     <template #content>
       <template v-for="(info, index) in displayInfos" :key="index">
-        <div v-if="info.value" class="mb-4 grid grid-cols-6 items-center gap-4">
-          <FloatLabel variant="on" class="col-span-4 sm:col-span-5">
-            <InputText
-              :id="`ga-display-${props.share.id}-${index}`"
-              :type="
-                info.type === 'password'
-                  ? isPasswordVisible(index)
-                    ? 'text'
-                    : 'password'
-                  : inputTypeGenerator(info.type)
-              "
-              fluid
-              :value="info.value"
-              :placeholder="info.value"
-              readonly
-            />
-            <label :for="`ga-display-${props.share.id}-${index}`">{{ info.label }}</label>
-          </FloatLabel>
-
-          <div class="col-span-2 sm:col-span-1 flex justify-center gap-4">
-            <Button
-              v-if="info.type === 'link' && isValidUrl(info.value)"
-              icon="pi pi-external-link"
-              severity="secondary"
-              text
-              fluid
-              raised
-              @click="openExternalLink(info.value)"
-            />
-            <Button
-              v-if="info.type === 'password'"
-              :icon="isPasswordVisible(index) ? 'pi pi-eye-slash' : 'pi pi-eye'"
-              severity="secondary"
-              text
-              fluid
-              raised
-              @click="togglePassword(index)"
-            />
-            <Button
-              icon="pi pi-clipboard"
-              severity="secondary"
-              text
-              fluid
-              raised
-              @click="copyText(info.value)"
-            />
-          </div>
+        <div v-if="info.value" class="mb-4 items-center">
+          <InputGroup>
+            <FloatLabel variant="on">
+              <InputText
+                :id="`ga-display-${props.share.id}-${index}`"
+                :type="
+                  info.type === 'password'
+                    ? isPasswordVisible(index)
+                      ? 'text'
+                      : 'password'
+                    : inputTypeGenerator(info.type)
+                "
+                fluid
+                :value="info.value"
+                :placeholder="info.value"
+                readonly
+              />
+              <label :for="`ga-display-${props.share.id}-${index}`">{{ info.label }}</label>
+            </FloatLabel>
+            <InputGroupAddon>
+              <Button
+                v-if="info.type === 'link' && isValidUrl(info.value)"
+                icon="pi pi-external-link"
+                severity="secondary"
+                variant="text"
+                @click="openExternalLink(info.value)"
+              />
+              <Button
+                v-if="info.type === 'password'"
+                :icon="isPasswordVisible(index) ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                severity="secondary"
+                variant="text"
+                @click="togglePassword(index)"
+              />
+              <Button
+                icon="pi pi-clipboard"
+                severity="secondary"
+                variant="text"
+                @click="copyText(info.value)"
+              />
+            </InputGroupAddon>
+          </InputGroup>
         </div>
       </template>
     </template>

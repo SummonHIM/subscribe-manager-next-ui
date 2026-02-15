@@ -33,6 +33,8 @@ declare module 'vue' {
     HomeGroupPanel: typeof import('./src/components/HomeGroupPanel.vue')['default']
     HomeTitle: typeof import('./src/components/HomeTitle.vue')['default']
     Image: typeof import('primevue/image')['default']
+    InputGroup: typeof import('primevue/inputgroup')['default']
+    InputGroupAddon: typeof import('primevue/inputgroupaddon')['default']
     InputNumber: typeof import('primevue/inputnumber')['default']
     InputText: typeof import('primevue/inputtext')['default']
     Menubar: typeof import('primevue/menubar')['default']
