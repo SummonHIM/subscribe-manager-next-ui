@@ -15,7 +15,16 @@
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <span class="text-xl">分组共享账号</span>
-        <Button icon="pi pi-plus" variant="text" rounded @click="onEditorOpenNew" />
+        <div>
+          <Button
+            icon="pi pi-refresh"
+            variant="text"
+            severity="secondary"
+            rounded
+            @click="onRefreshTable"
+          />
+          <Button icon="pi pi-plus" variant="text" rounded @click="onEditorOpenNew" />
+        </div>
       </div>
     </template>
 
@@ -134,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, ref } from 'vue'
+import { type Ref, onMounted, ref } from 'vue'
 
 import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
@@ -151,7 +160,7 @@ import {
 import type { APIBasicList, APIGroupShares, APIGroupSharesEdit } from '@/interfaces'
 
 interface GroupSharesEditorProps {
-  groupID: number
+  groupId: number
 }
 
 const toast = useToast()
@@ -176,7 +185,7 @@ const editorInitialValues: Ref<APIGroupSharesEdit> = ref({
   password: '',
   manage_url: '',
   manage_aff: '',
-  group: props.groupID,
+  group: props.groupId,
   order: -1,
   date_created: '',
 })
@@ -185,6 +194,16 @@ const editorGroupSharesID: Ref<number> = ref(-1)
 // 删除
 const deleteVisible = ref(false)
 const deleteGroupSharesID: Ref<number> = ref(-1)
+
+/** 刷新表格 */
+const onRefreshTable = async () => {
+  groupShares.value = await fetchGroupShares(
+    props.groupId,
+    tablePaginatorRows.value,
+    tablePaginatorFirst.value,
+    toast,
+  )
+}
 
 /** 编辑器表单验证器 */
 const editorResolver = ({ values }: FormResolverOptions) => {
@@ -241,7 +260,7 @@ const onEditorOpenNew = () => {
     password: '',
     manage_url: '',
     manage_aff: '',
-    group: props.groupID,
+    group: props.groupId,
     order: -1,
     date_created: '',
   }
@@ -272,24 +291,19 @@ const onEditorSave = async (event: FormSubmitEvent) => {
         ...editorInitialValues.value,
         ...event.values,
       }
-      await modifyGroupShare(props.groupID, editorGroupSharesID.value, values, toast)
+      await modifyGroupShare(props.groupId, editorGroupSharesID.value, values, toast)
     } else {
       const values: APIGroupSharesEdit = {
         ...editorInitialValues.value,
         ...event.values,
-        group: props.groupID,
+        group: props.groupId,
         order: groupShares.value.count + 1,
         date_created: new Date().toISOString(),
       }
-      await createGroupShare(props.groupID, values, toast)
+      await createGroupShare(props.groupId, values, toast)
     }
 
-    groupShares.value = await fetchGroupShares(
-      props.groupID,
-      tablePaginatorRows.value,
-      tablePaginatorFirst.value,
-      toast,
-    )
+    await onRefreshTable()
     editorVisible.value = false
   }
 }
@@ -305,14 +319,9 @@ const onOpenDeleteDialog = (id: number) => {
 
 /** 删除 */
 const onDeleteConfirm = async () => {
-  await deleteGroupShare(props.groupID, deleteGroupSharesID.value, toast)
+  await deleteGroupShare(props.groupId, deleteGroupSharesID.value, toast)
 
-  groupShares.value = await fetchGroupShares(
-    props.groupID,
-    tablePaginatorRows.value,
-    tablePaginatorFirst.value,
-    toast,
-  )
+  await onRefreshTable()
   deleteVisible.value = false
 }
 
@@ -323,7 +332,7 @@ const onDeleteConfirm = async () => {
 const onTablePaginatorChange = async (event: DataTablePageEvent) => {
   tablePaginatorRows.value = event.rows
   tablePaginatorFirst.value = event.first
-  groupShares.value = await fetchGroupShares(props.groupID, event.rows, event.first, toast)
+  groupShares.value = await fetchGroupShares(props.groupId, event.rows, event.first, toast)
 }
 
 /**
@@ -333,20 +342,12 @@ const onTablePaginatorChange = async (event: DataTablePageEvent) => {
 const onTableRowReorder = async (event: DataTableRowReorderEvent) => {
   const newList = moveByIndex(groupShares.value.results, event.dragIndex, event.dropIndex)
 
-  await reOrderShares(props.groupID, newList, tablePaginatorFirst.value, toast)
-  groupShares.value = await fetchGroupShares(
-    props.groupID,
-    tablePaginatorRows.value,
-    tablePaginatorFirst.value,
-    toast,
-  )
+  await reOrderShares(props.groupId, newList, tablePaginatorFirst.value, toast)
+  await onRefreshTable()
 }
 
 // 初始化，先获取一遍
-groupShares.value = await fetchGroupShares(
-  props.groupID,
-  tablePaginatorRows.value,
-  tablePaginatorFirst.value,
-  toast,
-)
+onMounted(async () => {
+  await onRefreshTable()
+})
 </script>

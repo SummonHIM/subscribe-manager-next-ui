@@ -12,6 +12,7 @@ import type {
   APIGroupSharesEdit,
   APIGroupSubscribes,
   APIGroupSubscribesEdit,
+  APIGroupSubscribesUsage,
   APIGroupUsers,
   APIGroupUsersEdit,
 } from '@/interfaces'
@@ -20,6 +21,36 @@ import { useApplicationStore } from '@/stores/application'
 interface ReOrder {
   id: number
   order: number
+}
+
+let locked = false
+const waitQueue: (() => void)[] = []
+
+/**
+ * 获取当前锁状态
+ * @returns 锁状态
+ */
+function acquireLock(): Promise<void> {
+  return new Promise((resolve) => {
+    if (!locked) {
+      locked = true
+      resolve()
+    } else {
+      waitQueue.push(resolve)
+    }
+  })
+}
+
+/**
+ * 释放锁
+ */
+function releaseLock() {
+  if (waitQueue.length > 0) {
+    const next = waitQueue.shift()
+    next?.()
+  } else {
+    locked = false
+  }
 }
 
 /**
@@ -159,6 +190,39 @@ export async function fetchGroupSubscribes(
       previous: null,
       results: [],
     }
+  }
+}
+
+/**
+ * 获取订阅用量信息
+ * @returns 订阅用量信息
+ */
+export async function fetchGroupSubscribesUsage(
+  groupID: number,
+  subscribeID: number,
+): Promise<APIGroupSubscribesUsage> {
+  await acquireLock() // 等待锁
+
+  try {
+    const response = await axios.get<APIGroupSubscribesUsage>(
+      `/api/v3/groups/${groupID}/subscribes/${subscribeID}/usage/`,
+    )
+
+    return response.data
+  } catch (error) {
+    console.warn("Failed to fetch subscribe's information", error)
+    return {
+      id: subscribeID,
+      upload: null,
+      download: null,
+      total: null,
+      expire: null,
+    }
+  } finally {
+    // 解锁
+    setTimeout(() => {
+      releaseLock()
+    }, 1000)
   }
 }
 

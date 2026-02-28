@@ -1,5 +1,7 @@
 import QRCode from 'qrcode'
 
+import type { APIGroupSubscribesUsage } from './interfaces'
+
 /**
  * 生成导入URL Scheme
  * @param type 类型
@@ -62,4 +64,42 @@ export async function getQrCodeURL(
     width: 260,
     margin: 2,
   })
+}
+
+/**
+ * 计算订阅流量用量百分比
+ * @param info 用量信息
+ * @returns 用量百分比
+ */
+export function calcUsagePercent(info: APIGroupSubscribesUsage): number | null {
+  const { upload, download, total } = info
+
+  if (upload === null || download === null || total === null || total <= 0) {
+    return null
+  }
+
+  const used = upload + download
+  const percent = (used / total) * 100
+
+  return Number(percent.toFixed(2))
+}
+
+/**
+ * 将字节转换为二进制单位
+ * @param bytes 字节
+ * @returns 二进制吉字节
+ */
+export function formatBytes(bytes: number | null): string | null {
+  if (bytes === null || bytes < 0) return null
+
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+  let value = bytes
+  let unitIndex = 0
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024
+    unitIndex++
+  }
+
+  return `${value.toFixed(2)} ${units[unitIndex]}`
 }

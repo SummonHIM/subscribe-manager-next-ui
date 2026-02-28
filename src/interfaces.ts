@@ -79,6 +79,14 @@ export interface APIGroupSubscribes {
 
 export type APIGroupSubscribesEdit = Omit<APIGroupSubscribes, 'id'>
 
+export interface APIGroupSubscribesUsage {
+  id: APIGroupSubscribes['id']
+  upload: number | null
+  download: number | null
+  total: number | null
+  expire: number | null
+}
+
 export interface APIGroupShares {
   id: number
   name: string
@@ -103,7 +111,7 @@ export interface APIGroupUsers {
 }
 
 export interface APIGroupUsersEdit {
-  expire: string
+  expire: Date
 }
 
 export interface APIUser {

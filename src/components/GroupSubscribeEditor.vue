@@ -15,7 +15,16 @@
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <span class="text-xl">分组订阅</span>
-        <Button icon="pi pi-plus" rounded variant="text" @click="onEditorOpenNew" />
+        <div>
+          <Button
+            icon="pi pi-refresh"
+            variant="text"
+            severity="secondary"
+            rounded
+            @click="onRefreshTable"
+          />
+          <Button icon="pi pi-plus" rounded variant="text" @click="onEditorOpenNew" />
+        </div>
       </div>
     </template>
 
@@ -132,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, ref } from 'vue'
+import { type Ref, onMounted, ref } from 'vue'
 
 import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
@@ -157,7 +166,7 @@ import type {
 } from '@/interfaces'
 
 interface GroupSubscribesEditorProps {
-  groupID: number
+  groupId: number
 }
 
 const toast = useToast()
@@ -180,7 +189,7 @@ const editorInitialValues: Ref<APIGroupSubscribesEdit> = ref({
   name: '',
   url: '',
   converter: false,
-  group: props.groupID,
+  group: props.groupId,
   order: -1,
   date_created: '',
   converter_options: null,
@@ -195,6 +204,16 @@ const deleteGroupSubscribesID: Ref<number> = ref(-1)
 const converterVisible = ref(false)
 const converterInitialValues: Ref<ConverterOptions> = ref({ ...converterDefaultOptions })
 const converterGroupSubscribesID: Ref<number> = ref(-1)
+
+/** 刷新表格 */
+const onRefreshTable = async () => {
+  groupSubscribes.value = await fetchGroupSubscribes(
+    props.groupId,
+    tablePaginatorRows.value,
+    tablePaginatorFirst.value,
+    toast,
+  )
+}
 
 /** 编辑器表单验证器 */
 const editorResolver = ({ values }: FormResolverOptions) => {
@@ -237,7 +256,7 @@ const onEditorOpenNew = () => {
     name: '',
     url: '',
     converter: false,
-    group: props.groupID,
+    group: props.groupId,
     order: -1,
     date_created: '',
     converter_options: null,
@@ -269,25 +288,20 @@ const onEditorSave = async (event: FormSubmitEvent) => {
         ...editorInitialValues.value,
         ...event.values,
       }
-      await modifyGroupSubscribe(props.groupID, editorGroupSubscribesID.value, values, toast)
+      await modifyGroupSubscribe(props.groupId, editorGroupSubscribesID.value, values, toast)
     } else {
       const values: APIGroupSubscribesEdit = {
         ...editorInitialValues.value,
         ...event.values,
-        group: props.groupID,
+        group: props.groupId,
         order: groupSubscribes.value.count + 1,
         date_created: new Date().toISOString(),
         converter_options: null,
       }
-      await createGroupSubscribe(props.groupID, values, toast)
+      await createGroupSubscribe(props.groupId, values, toast)
     }
 
-    groupSubscribes.value = await fetchGroupSubscribes(
-      props.groupID,
-      tablePaginatorRows.value,
-      tablePaginatorFirst.value,
-      toast,
-    )
+    await onRefreshTable()
     editorVisible.value = false
   }
 }
@@ -303,14 +317,9 @@ const onOpenDeleteDialog = (id: number) => {
 
 /** 删除 */
 const onDeleteConfirm = async () => {
-  await deleteGroupSubscribe(props.groupID, deleteGroupSubscribesID.value, toast)
+  await deleteGroupSubscribe(props.groupId, deleteGroupSubscribesID.value, toast)
 
-  groupSubscribes.value = await fetchGroupSubscribes(
-    props.groupID,
-    tablePaginatorRows.value,
-    tablePaginatorFirst.value,
-    toast,
-  )
+  await onRefreshTable()
   deleteVisible.value = false
 }
 
@@ -337,18 +346,13 @@ const onCancelConverterDialog = () => {
 const onSaveConverterDialog = async (event: FormSubmitEvent) => {
   if (event.valid) {
     await modifyGroupSubscribeConverterOptions(
-      props.groupID,
+      props.groupId,
       converterGroupSubscribesID.value,
       convertToApiOptions(event.values as ConverterOptions),
       toast,
     )
 
-    groupSubscribes.value = await fetchGroupSubscribes(
-      props.groupID,
-      tablePaginatorRows.value,
-      tablePaginatorFirst.value,
-      toast,
-    )
+    await onRefreshTable()
     converterVisible.value = false
   }
 }
@@ -360,7 +364,7 @@ const onSaveConverterDialog = async (event: FormSubmitEvent) => {
 const onTablePaginatorChange = async (event: DataTablePageEvent) => {
   tablePaginatorRows.value = event.rows
   tablePaginatorFirst.value = event.first
-  groupSubscribes.value = await fetchGroupSubscribes(props.groupID, event.rows, event.first, toast)
+  groupSubscribes.value = await fetchGroupSubscribes(props.groupId, event.rows, event.first, toast)
 }
 
 /**
@@ -370,13 +374,8 @@ const onTablePaginatorChange = async (event: DataTablePageEvent) => {
 const onTableRowReorder = async (event: DataTableRowReorderEvent) => {
   const newList = moveByIndex(groupSubscribes.value.results, event.dragIndex, event.dropIndex)
 
-  await reOrderSubscribes(props.groupID, newList, tablePaginatorFirst.value, toast)
-  groupSubscribes.value = await fetchGroupSubscribes(
-    props.groupID,
-    tablePaginatorRows.value,
-    tablePaginatorFirst.value,
-    toast,
-  )
+  await reOrderSubscribes(props.groupId, newList, tablePaginatorFirst.value, toast)
+  await onRefreshTable()
 }
 
 /** 生成服务器强制转换选项的消息 */
@@ -391,10 +390,7 @@ function alertServerConverterOption(converter_options: APIConverterOptions): str
 }
 
 // 初始化，先获取一遍
-groupSubscribes.value = await fetchGroupSubscribes(
-  props.groupID,
-  tablePaginatorRows.value,
-  tablePaginatorFirst.value,
-  toast,
-)
+onMounted(async () => {
+  await onRefreshTable()
+})
 </script>

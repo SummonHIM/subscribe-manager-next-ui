@@ -34,6 +34,7 @@
             class="mb-4"
             v-for="sub in groupSubscribes.results"
             :key="sub.id"
+            :group-id="group.id"
             :subscribe="sub"
           />
 

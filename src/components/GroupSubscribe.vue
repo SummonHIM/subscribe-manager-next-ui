@@ -5,7 +5,7 @@
     </template>
 
     <template #content>
-      <div class="grid grid-cols-6 items-center gap-4 mb-6">
+      <div class="grid grid-cols-6 items-center gap-4">
         <FloatLabel variant="on" class="col-span-6 md:col-span-5">
           <InputText
             :id="`gs-manage-url-${props.subscribe.id}`"
@@ -38,7 +38,30 @@
         </div>
       </div>
 
-      <Card>
+      <div class="mt-4">
+        <div class="flex justify-between">
+          <p
+            v-if="displayUsage.download && displayUsage.upload && displayUsage.total"
+            class="text-sm font-light"
+          >
+            {{ formatBytes(displayUsage.download + displayUsage.upload) }}
+            /
+            {{ formatBytes(displayUsage.total) }}
+          </p>
+          <p v-if="displayUsage.expire" class="text-sm font-light">
+            {{ new Date(displayUsage.expire * 1000).toLocaleString() }}
+          </p>
+        </div>
+        <ProgressBar
+          v-if="displayUsageMeter"
+          :value="displayUsageMeter"
+          :pt="{
+            root: { style: 'height: .85rem' },
+          }"
+        />
+      </div>
+
+      <Card class="mt-6">
         <template #title><p class="text-base">其他选项</p></template>
         <template #content>
           <template v-if="props.subscribe.converter">
@@ -118,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, ref, watch } from 'vue'
+import { type Ref, onMounted, ref, watch } from 'vue'
 
 import axios from 'axios'
 import type { TieredMenuMethods } from 'primevue'
@@ -126,12 +149,19 @@ import type { MenuItem } from 'primevue/menuitem'
 import { useToast } from 'primevue/usetoast'
 
 import { parseAPIError } from '@/exceptions'
-import type { APIGroupSubscribes, APIUserSubscribeTokens } from '@/interfaces'
+import { fetchGroupSubscribesUsage } from '@/groups'
+import type {
+  APIGroup,
+  APIGroupSubscribes,
+  APIGroupSubscribesUsage,
+  APIUserSubscribeTokens,
+} from '@/interfaces'
 import { useApplicationStore } from '@/stores/application'
 import { useConverterStore } from '@/stores/converter'
-import { createImportScheme, getQrCodeURL } from '@/subscribes'
+import { calcUsagePercent, createImportScheme, formatBytes, getQrCodeURL } from '@/subscribes'
 
 interface GroupSubscribesProps {
+  groupId: APIGroup['id']
   subscribe: APIGroupSubscribes
 }
 
@@ -145,6 +175,14 @@ let tokenCache: string | null = null // 令牌缓存
 const displayUrl: Ref<URL> = ref(new URL(props.subscribe.url)) // 显示在输入框中的订阅链接
 const displayOriginUrl: Ref<boolean> = ref(false) // 是否显示原始订阅按钮
 const displayUrlOpenConverter: Ref<boolean> = ref(props.subscribe.converter) // 是否使用订阅转换按钮
+const displayUsage: Ref<APIGroupSubscribesUsage> = ref({
+  id: props.subscribe.id,
+  upload: null,
+  download: null,
+  total: null,
+  expire: null,
+})
+const displayUsageMeter: Ref<number | null> = ref(null)
 
 // 导入菜单
 const gsImportMenuMethods: Ref<TieredMenuMethods | null> = ref(null) // 导入菜单方法
@@ -391,4 +429,10 @@ watch(
   },
   { immediate: true },
 )
+
+onMounted(async () => {
+  displayUsage.value = await fetchGroupSubscribesUsage(props.groupId, props.subscribe.id)
+  displayUsageMeter.value = calcUsagePercent(displayUsage.value)
+  console.log(displayUsageMeter.value)
+})
 </script>
