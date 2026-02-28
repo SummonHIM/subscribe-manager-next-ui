@@ -14,6 +14,13 @@
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <span class="text-xl">分组用户</span>
+        <Button
+          icon="pi pi-refresh"
+          variant="text"
+          severity="secondary"
+          rounded
+          @click="onRefreshTable"
+        />
       </div>
     </template>
 
@@ -84,6 +91,7 @@
             variant="text"
             @click="onCopyExpireTemp"
           />
+          <Button v-else icon="pi pi-spin pi-spinner" severity="secondary" variant="text" />
         </InputGroupAddon>
       </InputGroup>
 
