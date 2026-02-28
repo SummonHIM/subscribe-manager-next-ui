@@ -146,7 +146,7 @@ onMounted(async () => {
     group.id = -1
   }
 
-  if (group.subscribes.length > 1) {
+  if (group.subscribes.length >= 1) {
     const firstSub = group.subscribes[0]
     if (firstSub) {
       const usage = await fetchGroupSubscribesUsage(group.id, firstSub)
