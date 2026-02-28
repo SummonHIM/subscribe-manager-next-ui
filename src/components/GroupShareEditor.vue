@@ -1,8 +1,4 @@
 <template>
-  <div class="flex justify-end gap-2 mb-4">
-    <Button icon="pi pi-plus" variant="text" rounded raised @click="onEditorOpenNew" />
-  </div>
-
   <DataTable
     :value="groupShares.results"
     :rows="tablePaginatorRows"
@@ -16,6 +12,13 @@
     paginator
     lazy
   >
+    <template #header>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xl">分组共享账号</span>
+        <Button icon="pi pi-plus" variant="text" rounded @click="onEditorOpenNew" />
+      </div>
+    </template>
+
     <Column rowReorder headerStyle="width: 2rem" />
     <!-- <Column field="id" header="ID"></Column> -->
     <Column field="name" header="名称"></Column>
@@ -39,7 +42,6 @@
           icon="pi pi-pencil"
           variant="text"
           rounded
-          raised
           class="mr-2"
           @click="onEditorOpenEdit(slotProps.data)"
         />
@@ -47,7 +49,6 @@
           icon="pi pi-trash"
           variant="text"
           rounded
-          raised
           severity="danger"
           @click="onOpenDeleteDialog(slotProps.data.id)"
         />

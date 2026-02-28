@@ -11,6 +11,12 @@
     paginator
     lazy
   >
+    <template #header>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xl">分组用户</span>
+      </div>
+    </template>
+
     <!-- <Column field="id" header="ID"></Column> -->
     <Column field="user" header="用户 ID"></Column>
     <Column field="username" header="用户名"></Column>
@@ -31,7 +37,6 @@
           icon="pi pi-pencil"
           variant="text"
           rounded
-          raised
           class="mr-2"
           @click="onEditorOpenEdit(slotProps.data)"
         />
@@ -39,7 +44,6 @@
           icon="pi pi-trash"
           variant="text"
           rounded
-          raised
           severity="danger"
           @click="onOpenDeleteDialog(slotProps.data.id)"
         />

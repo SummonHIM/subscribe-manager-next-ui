@@ -32,21 +32,18 @@
       </Card>
 
       <Card class="mb-2">
-        <template #title>分组订阅</template>
         <template #content>
           <GroupSubscribeEditor :groupID="queryGroupID" />
         </template>
       </Card>
 
       <Card class="mb-2">
-        <template #title>分组共享账号</template>
         <template #content>
           <GroupShareEditor :groupID="queryGroupID" />
         </template>
       </Card>
 
       <Card class="mb-2">
-        <template #title>分组用户</template>
         <template #content>
           <GroupUsersEditor :groupID="queryGroupID" />
         </template>
