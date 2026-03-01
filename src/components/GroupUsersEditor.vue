@@ -264,12 +264,6 @@ const onCopyExpireTemp = async () => {
   }
 }
 
-// function isISODateTimeString(value: string): boolean {
-//   if (!value || typeof value !== 'string') return false
-//   const time = new Date(value).getTime()
-//   return !isNaN(time)
-// }
-
 // 获取一遍
 onMounted(async () => {
   await onRefreshTable()
