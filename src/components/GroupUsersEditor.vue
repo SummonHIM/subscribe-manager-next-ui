@@ -73,12 +73,13 @@
       <InputGroup class="mt-2">
         <FloatLabel variant="on">
           <DatePicker
-            v-model="editorExpireModel"
-            id="gu-editor-expire"
             name="expire"
+            id="gu-editor-expire"
+            v-model="editorExpireModel"
             dateFormat="yy/mm/dd"
-            showTime
             hourFormat="24"
+            showSeconds
+            showTime
             fluid
           />
           <label for="gu-editor-expire">过期日</label>
@@ -138,6 +139,10 @@ const groupUsers: Ref<APIBasicList<APIGroupUsers>> = ref({
   results: [],
 })
 
+// 三十天后
+const thirtyDay = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+thirtyDay.setHours(0, 0, 0, 0)
+
 // 分页
 const tablePaginatorRows = ref(10)
 const tablePaginatorFirst = ref(0)
@@ -145,7 +150,7 @@ const tablePaginatorFirst = ref(0)
 // 编辑对话框
 const editorVisible = ref(false)
 const editorInitialValues: Ref<APIGroupUsersEdit> = ref({
-  expire: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  expire: thirtyDay,
 })
 const editorGroupUserID: Ref<number> = ref(-1)
 const editorExpireModel: Ref<Date> = ref(editorInitialValues.value.expire)
@@ -170,6 +175,7 @@ const onRefreshTable = async () => {
  */
 const onEditorOpenEdit = (groupUser: APIGroupUsers) => {
   editorGroupUserID.value = groupUser.id
+  editorInitialValues.value.expire = groupUser.expire ? new Date(groupUser.expire) : thirtyDay
   editorExpireModel.value = editorInitialValues.value.expire
   editorVisible.value = true
 }
