@@ -144,6 +144,6 @@ async function genGravatar(email: string, defaultImage: string = 'identicon'): P
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
   // 返回完整 URL
-  return `https://www.gravatar.com/avatar/${hashHex}?d=${encodeURIComponent(defaultImage)}`
+  return `https://seccdn.libravatar.org/gravatarproxy/${hashHex}?d=${encodeURIComponent(defaultImage)}`
 }
 </script>
