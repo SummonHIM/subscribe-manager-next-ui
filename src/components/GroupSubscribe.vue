@@ -296,6 +296,7 @@ const qrCodeDialogSelecter = [
   { name: 'Surfboard', code: 'surfboard' },
   { name: 'sing-box', code: 'singbox' },
   { name: 'Quantumult X', code: 'quantumultx' },
+  { name: '纯链接', code: 'pure_url' }
 ]
 const qrCodeDialogImageURL = ref('') // 生成的二维码图片
 

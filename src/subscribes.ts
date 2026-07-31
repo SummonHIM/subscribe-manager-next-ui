@@ -43,8 +43,9 @@ export function createImportScheme(
         encodeURIComponent(name) +
         ']}'
       )
+    case 'pure_url':
     default:
-      return ''
+      return url
   }
 }
 
