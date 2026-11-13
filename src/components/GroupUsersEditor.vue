@@ -41,6 +41,12 @@
       </div>
     </template>
 
+    <template #empty>
+      <div class="py-10 text-center text-sm text-neutral-400 dark:text-neutral-500">
+        {{ search.trim() ? '没有匹配的结果' : '暂无数据' }}
+      </div>
+    </template>
+
     <Column field="username" header="用户" style="width: 100%">
       <template #body="slotProps">
         <div class="min-w-0">
@@ -147,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, onMounted, ref, watch } from 'vue'
+import { type Ref, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { DataTablePageEvent, DataTableRowDoubleClickEvent } from 'primevue/datatable'
 import { useToast } from 'primevue/usetoast'
@@ -172,6 +178,9 @@ interface SubscribeOption {
 
 const toast = useToast()
 const props = defineProps<GroupUserEditorProps>()
+const emit = defineEmits<{
+  (e: 'editing-state', value: boolean): void
+}>()
 
 const groupUsers: Ref<APIBasicList<APIGroupUsers>> = ref({
   count: 0,
@@ -190,6 +199,9 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 // 行内编辑
 const editingRows: Ref<APIGroupUsers[]> = ref([])
+
+// 通知父组件是否有未保存的编辑
+watch(editingRows, (rows) => emit('editing-state', rows.length > 0))
 
 // 订阅过期日快捷填充
 const subscribeOptions: Ref<SubscribeOption[]> = ref([])
@@ -361,7 +373,7 @@ const onTablePaginatorChange = async (event: DataTablePageEvent) => {
 
 /** 加载订阅列表，供“按订阅设置”使用 */
 const loadSubscribeOptions = async () => {
-  const subscribes = await fetchGroupSubscribes(props.groupId, 100, 0, toast)
+  const subscribes = await fetchGroupSubscribes(props.groupId, 10, 0, toast)
   subscribeOptions.value = subscribes.results.map((item) => ({
     id: item.id,
     name: item.name,
@@ -371,5 +383,9 @@ const loadSubscribeOptions = async () => {
 // 初始化
 onMounted(async () => {
   await Promise.all([onRefreshTable(), loadSubscribeOptions()])
+})
+
+onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>

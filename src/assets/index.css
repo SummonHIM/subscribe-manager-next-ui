@@ -23,6 +23,11 @@
     min-width: 0 !important;
   }
 
+  /* 手机上隐藏“每页条数”下拉，避免分页器换行 */
+  .p-paginator-rpp-dropdown {
+    display: none !important;
+  }
+
   /* 手机端：隐藏表头，每一行折叠成卡片 */
   .subscribe-table .p-datatable-thead,
   .share-table .p-datatable-thead,

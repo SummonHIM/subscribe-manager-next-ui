@@ -27,7 +27,7 @@
               ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
               : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200'
           "
-          @click="activeTab = tab.id"
+          @click="switchTab(tab.id)"
         >
           {{ tab.label }}
         </button>
@@ -59,15 +59,15 @@
         </section>
 
         <section v-else-if="activeTab === 'subscribes'" class="surface-card p-4 sm:p-5">
-          <GroupSubscribeEditor :group-id="queryGroupID" />
+          <GroupSubscribeEditor :group-id="queryGroupID" @editing-state="editingDirty = $event" />
         </section>
 
         <section v-else-if="activeTab === 'shares'" class="surface-card p-4 sm:p-5">
-          <GroupShareEditor :group-id="queryGroupID" />
+          <GroupShareEditor :group-id="queryGroupID" @editing-state="editingDirty = $event" />
         </section>
 
         <section v-else class="surface-card p-4 sm:p-5">
-          <GroupUsersEditor :group-id="queryGroupID" />
+          <GroupUsersEditor :group-id="queryGroupID" @editing-state="editingDirty = $event" />
         </section>
       </div>
     </template>
@@ -99,6 +99,22 @@ const queryGroupID = Number(route.query.id)
 
 // 标签页
 const activeTab: Ref<TabID> = ref('settings')
+const editingDirty = ref(false)
+
+/**
+ * 切换标签页
+ * @param id 目标标签
+ */
+const switchTab = (id: TabID) => {
+  if (id === activeTab.value) return
+
+  if (editingDirty.value && !window.confirm('当前有未保存的修改，切换标签会丢弃，是否继续？')) {
+    return
+  }
+
+  activeTab.value = id
+  editingDirty.value = false
+}
 const tabs: { id: TabID; label: string }[] = [
   { id: 'settings', label: '分组设置' },
   { id: 'subscribes', label: '订阅' },

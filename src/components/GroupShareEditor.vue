@@ -50,7 +50,13 @@
       </div>
     </template>
 
-    <Column rowReorder />
+    <template #empty>
+      <div class="py-10 text-center text-sm text-neutral-400 dark:text-neutral-500">
+        {{ search.trim() ? '没有匹配的结果' : '暂无数据' }}
+      </div>
+    </template>
+
+    <Column :rowReorder="!search.trim()" />
     <Column field="name" header="共享账号" style="width: 100%">
       <template #body="slotProps">
         <div class="min-w-0">
@@ -254,7 +260,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, onMounted, ref, watch } from 'vue'
+import { type Ref, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
 import type {
@@ -280,6 +286,9 @@ interface GroupSharesEditorProps {
 
 const toast = useToast()
 const props = defineProps<GroupSharesEditorProps>()
+const emit = defineEmits<{
+  (e: 'editing-state', value: boolean): void
+}>()
 
 const groupShares: Ref<APIBasicList<APIGroupShares>> = ref({
   count: 0,
@@ -298,6 +307,9 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 // 行内编辑
 const editingRows: Ref<APIGroupShares[]> = ref([])
+
+// 通知父组件是否有未保存的编辑
+watch(editingRows, (rows) => emit('editing-state', rows.length > 0))
 
 // 新建对话框
 const editorVisible = ref(false)
@@ -516,6 +528,9 @@ const onTablePaginatorChange = async (event: DataTablePageEvent) => {
  * @param event 事件
  */
 const onTableRowReorder = async (event: DataTableRowReorderEvent) => {
+  // 搜索状态下不允许排序，避免只对过滤结果重排
+  if (search.value.trim()) return
+
   const newList = moveByIndex(groupShares.value.results, event.dragIndex, event.dropIndex)
 
   await reOrderShares(props.groupId, newList, tablePaginatorFirst.value, toast)
@@ -525,5 +540,9 @@ const onTableRowReorder = async (event: DataTableRowReorderEvent) => {
 // 初始化，先获取一遍
 onMounted(async () => {
   await onRefreshTable()
+})
+
+onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>
