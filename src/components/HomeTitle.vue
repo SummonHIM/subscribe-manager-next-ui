@@ -8,7 +8,8 @@
       @click="card.on_click"
     >
       <span
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+        :class="card.color"
       >
         <i :class="card.icon" class="text-sm"></i>
       </span>
@@ -34,6 +35,7 @@ interface HomeTitleCards {
   title: string
   icon: string
   description: string
+  color: string
   on_click?: () => void
 }
 
@@ -42,6 +44,7 @@ const cards: HomeTitleCards[] = [
     title: '下载客户端',
     icon: 'pi pi-download',
     description: '下载适合当前操作系统的代理客户端',
+    color: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400',
     on_click: () => {
       window.open('https://www.123865.com/s/uCWGTd-qn4l?pwd=rXgE#', '_blank')
     },
@@ -50,6 +53,7 @@ const cards: HomeTitleCards[] = [
     title: '融合订阅链接',
     icon: 'pi pi-link',
     description: '将多个订阅融合为一个订阅',
+    color: 'bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400',
     on_click: () => {
       router.push('/converter')
     },
@@ -58,6 +62,7 @@ const cards: HomeTitleCards[] = [
     title: '订阅转换器',
     icon: 'pi pi-refresh',
     description: '将订阅转换为其他代理客户端支持格式',
+    color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400',
     on_click: () => {
       window.open('http://subconverter.summonhim.top', '_blank')
     },
