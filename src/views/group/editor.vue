@@ -10,7 +10,10 @@
       </RouterLink>
 
       <div class="min-w-0">
-        <h1 class="page-title truncate">{{ group.name }}</h1>
+        <div class="flex min-w-0 items-center gap-2">
+          <span v-if="group.emoji" class="text-2xl leading-none">{{ group.emoji }}</span>
+          <h1 class="page-title truncate">{{ group.name }}</h1>
+        </div>
         <p class="page-subtitle mt-1">双击表格行直接编辑；文本输入框内 Enter 保存、Esc 取消。</p>
       </div>
     </header>
@@ -49,6 +52,28 @@
             </FloatLabel>
             <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">
               {{ $form.name.error?.message }}
+            </Message>
+
+            <div class="mt-3 flex items-end gap-3">
+              <FloatLabel variant="on" class="min-w-0 flex-1">
+                <InputText
+                  id="group-editor-emoji"
+                  name="emoji"
+                  maxlength="8"
+                  fluid
+                  autocomplete="off"
+                />
+                <label for="group-editor-emoji">Emoji 图标（可留空）</label>
+              </FloatLabel>
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-lg dark:bg-neutral-800"
+                aria-hidden="true"
+              >
+                {{ $form.emoji?.value || '🙂' }}
+              </span>
+            </div>
+            <Message v-if="$form.emoji?.invalid" severity="error" size="small" variant="simple">
+              {{ $form.emoji.error?.message }}
             </Message>
 
             <div class="mt-3 flex justify-end gap-2">
@@ -93,7 +118,7 @@ import { useRoute } from 'vue-router'
 import { Form, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
 import { useToast } from 'primevue/usetoast'
 
-import { changeGroupName, fetchGroup } from '@/groups'
+import { changeGroupEmoji, changeGroupName, fetchGroup } from '@/groups'
 import type { APIGroup } from '@/interfaces'
 import { useAPIGroupStore } from '@/stores/groups'
 
@@ -140,6 +165,7 @@ if (!tempGroup) {
 const group: APIGroup = tempGroup
 const groupInitialValues = reactive({
   name: group.name,
+  emoji: group.emoji ?? '',
 })
 
 /**
@@ -158,6 +184,11 @@ const groupResolver = ({ values }: FormResolverOptions) => {
     }
   }
 
+  const emoji = values.emoji as string | undefined
+  if (emoji && emoji.trim().length > 8) {
+    errors.emoji = [{ message: 'Emoji 长度不得大于 8。' }]
+  }
+
   return {
     values,
     errors,
@@ -172,9 +203,20 @@ const groupFormSubmit = async (e: FormSubmitEvent) => {
   if (!e.valid) return
 
   const name = e.values.name as string
-  if (await changeGroupName(queryGroupID, name, toast)) {
+  const emoji = ((e.values.emoji as string | undefined) ?? '').trim()
+  const emojiChanged = emoji !== (group.emoji ?? '')
+
+  const nameOk = await changeGroupName(queryGroupID, name, toast)
+  const emojiOk = emojiChanged ? await changeGroupEmoji(queryGroupID, emoji, toast) : true
+
+  if (nameOk) {
     group.name = name
     groupInitialValues.name = name
+  }
+
+  if (emojiChanged && emojiOk) {
+    group.emoji = emoji || null
+    groupInitialValues.emoji = emoji
   }
 }
 

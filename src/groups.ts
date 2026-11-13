@@ -97,6 +97,7 @@ export async function fetchGroup(id: number, errorMsg: Ref<string | null>) {
     return {
       id: -1,
       name: `未知组`,
+      emoji: null,
       subscribes: [],
       shares: [],
       myself: { admin: false, expire: new Date().toISOString() },
@@ -167,6 +168,55 @@ function listQuery(limit: number, offset: number, search: string = ''): string {
   if (search.trim()) params.set('search', search.trim())
 
   return params.toString()
+}
+
+/**
+ * 修改分组 emoji 图标
+ * @param id 分组ID
+ * @param emoji 新 emoji（空字符串表示清除）
+ * @param toast PrimeVue 消息对象
+ */
+export async function changeGroupEmoji(
+  id: number,
+  emoji: string,
+  toast: ToastServiceMethods,
+): Promise<boolean> {
+  try {
+    const applicationStore = useApplicationStore()
+    await axios.patch(
+      `/api/v3/groups/${id}/emoji/`,
+      { emoji },
+      { headers: { 'X-CSRFToken': applicationStore.csrfToken } },
+    )
+    toast.add({
+      severity: 'success',
+      summary: '保存成功',
+      life: 3000,
+    })
+    return true
+  } catch (error) {
+    const { messages } = parseAPIError<APIGroup>(error)
+
+    if (messages.length) {
+      messages.forEach((msg) =>
+        toast.add({
+          severity: 'error',
+          summary: '保存 emoji 时发生错误',
+          detail: msg,
+          life: 5000,
+        }),
+      )
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: '保存 emoji 时发生错误',
+        life: 5000,
+      })
+    }
+
+    console.error(error)
+    return false
+  }
 }
 
 /**

@@ -9,7 +9,10 @@
             : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
         "
       >
-        <i class="pi pi-users text-sm"></i>
+        <span v-if="props.group.emoji" class="text-lg leading-none">
+          {{ props.group.emoji }}
+        </span>
+        <i v-else class="pi pi-users text-sm"></i>
       </span>
 
       <div class="min-w-0 flex-1">

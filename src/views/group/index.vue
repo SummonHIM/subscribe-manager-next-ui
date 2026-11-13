@@ -15,6 +15,7 @@
 
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
+            <span v-if="group.emoji" class="text-2xl leading-none">{{ group.emoji }}</span>
             <h1
               class="truncate text-xl font-semibold text-neutral-900 sm:text-2xl dark:text-neutral-100"
             >

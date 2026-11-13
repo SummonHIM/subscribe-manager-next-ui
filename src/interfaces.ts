@@ -19,6 +19,7 @@ interface APIGroupMyself {
 export interface APIGroup {
   id: number
   name: string
+  emoji: string | null
   subscribes: number[]
   shares: number[]
   myself: APIGroupMyself
