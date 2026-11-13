@@ -9,7 +9,7 @@
         class="flex items-center gap-2 rounded-md p-1 transition-opacity hover:opacity-80"
       >
         <Avatar :image="FavIcon" shape="circle" class="!h-7 !w-7" />
-        <span class="text-sm font-medium text-neutral-700 dark:text-neutral-200">订阅管理</span>
+        <span class="text-sm font-medium text-neutral-700 dark:text-neutral-200">订阅管理器</span>
       </RouterLink>
 
       <Button
