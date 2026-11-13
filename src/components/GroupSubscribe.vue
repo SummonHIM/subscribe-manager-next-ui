@@ -17,17 +17,6 @@
         />
       </div>
 
-      <Button
-        label="导入"
-        icon="pi pi-download"
-        size="small"
-        severity="secondary"
-        outlined
-        class="shrink-0"
-        aria-haspopup="true"
-        :aria-controls="`group-subscribe-import-menu-${props.subscribe.id}`"
-        @click="toggleGsImportMenu"
-      />
       <TieredMenu
         ref="gsImportMenuMethods"
         :id="`group-subscribe-import-menu-${props.subscribe.id}`"
@@ -56,12 +45,12 @@
         @click="copyDisplayUrl"
       />
       <Button
-        icon="pi pi-ellipsis-h"
+        icon="pi pi-download"
         text
         rounded
         size="small"
         severity="secondary"
-        aria-label="更多操作"
+        aria-label="导入到…"
         aria-haspopup="true"
         :aria-controls="`group-subscribe-import-menu-${props.subscribe.id}`"
         @click="toggleGsImportMenu"
@@ -206,17 +195,8 @@ const displayUsageMeter: Ref<number | null> = ref(null)
 
 // 导入菜单
 const gsImportMenuMethods: Ref<TieredMenuMethods | null> = ref(null) // 导入菜单方法
-const menuItemsOriginal: MenuItem[] = [
-  // 无转换时的菜单
-  {
-    label: '剪切板',
-    command: () => {
-      copyDisplayUrl()
-    },
-  },
-]
-const menuItemsConverter: MenuItem[] = [
-  //有转换时的菜单
+// 客户端导入菜单（与是否开启转换无关）
+const menuItemsBase: MenuItem[] = [
   {
     label: 'Clash',
     command: () => {
@@ -273,6 +253,11 @@ const menuItemsConverter: MenuItem[] = [
       qrCodeDialogOpen.value = true
     },
   },
+]
+
+// 开启转换时额外提供“融合订阅转换器”
+const menuItemsConverter: MenuItem[] = [
+  ...menuItemsBase,
   {
     label: '融合订阅转换器',
     command: () => {
@@ -287,9 +272,9 @@ const menuItemsConverter: MenuItem[] = [
       }
     },
   },
-  ...menuItemsOriginal,
 ]
-const gsImportMenuItems: Ref<MenuItem[]> = ref(menuItemsOriginal) // 导入菜单内容
+
+const gsImportMenuItems: Ref<MenuItem[]> = ref(menuItemsBase) // 导入菜单内容
 
 // 导入二维码对话框
 const qrCodeDialogOpen = ref(false) // 是否打开
@@ -361,7 +346,7 @@ const copyDisplayUrl = async () => {
 const genSubscribeURL = async (refresh: boolean = false) => {
   if (displayOriginUrl.value) {
     // 显示原始订阅，菜单为原始菜单
-    gsImportMenuItems.value = menuItemsOriginal
+    gsImportMenuItems.value = menuItemsBase
     displayUrl.value = new URL(props.subscribe.url)
     return
   }
@@ -391,7 +376,7 @@ const genSubscribeURL = async (refresh: boolean = false) => {
     // 检测是否关闭订阅转换
     if (props.subscribe.converter && !displayUrlOpenConverter.value) {
       // 关闭了，原始菜单
-      gsImportMenuItems.value = menuItemsOriginal
+      gsImportMenuItems.value = menuItemsBase
       displayUrl.value.searchParams.set('converter', 'false')
     } else if (props.subscribe.converter && displayUrlOpenConverter.value) {
       // 没关闭则使用转换菜单
