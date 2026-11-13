@@ -27,7 +27,7 @@
               ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
               : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200'
           "
-          @click="switchTab(tab.id)"
+          @click="activeTab = tab.id"
         >
           {{ tab.label }}
         </button>
@@ -58,16 +58,28 @@
           </Form>
         </section>
 
-        <section v-else-if="activeTab === 'subscribes'" class="surface-card p-4 sm:p-5">
-          <GroupSubscribeEditor :group-id="queryGroupID" @editing-state="editingDirty = $event" />
+        <section
+          v-if="visited.subscribes"
+          v-show="activeTab === 'subscribes'"
+          class="surface-card p-4 sm:p-5"
+        >
+          <GroupSubscribeEditor :group-id="queryGroupID" />
         </section>
 
-        <section v-else-if="activeTab === 'shares'" class="surface-card p-4 sm:p-5">
-          <GroupShareEditor :group-id="queryGroupID" @editing-state="editingDirty = $event" />
+        <section
+          v-if="visited.shares"
+          v-show="activeTab === 'shares'"
+          class="surface-card p-4 sm:p-5"
+        >
+          <GroupShareEditor :group-id="queryGroupID" />
         </section>
 
-        <section v-else class="surface-card p-4 sm:p-5">
-          <GroupUsersEditor :group-id="queryGroupID" @editing-state="editingDirty = $event" />
+        <section
+          v-if="visited.users"
+          v-show="activeTab === 'users'"
+          class="surface-card p-4 sm:p-5"
+        >
+          <GroupUsersEditor :group-id="queryGroupID" />
         </section>
       </div>
     </template>
@@ -75,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, reactive, ref } from 'vue'
+import { type Ref, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { Form, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
@@ -99,22 +111,19 @@ const queryGroupID = Number(route.query.id)
 
 // 标签页
 const activeTab: Ref<TabID> = ref('settings')
-const editingDirty = ref(false)
 
-/**
- * 切换标签页
- * @param id 目标标签
- */
-const switchTab = (id: TabID) => {
-  if (id === activeTab.value) return
+// 已访问过的标签（首次访问才挂载，之后用 v-show 保留状态，避免重复请求）
+const visited = reactive<Record<TabID, boolean>>({
+  settings: true,
+  subscribes: false,
+  shares: false,
+  users: false,
+})
 
-  if (editingDirty.value && !window.confirm('当前有未保存的修改，切换标签会丢弃，是否继续？')) {
-    return
-  }
+watch(activeTab, (tab) => {
+  visited[tab] = true
+})
 
-  activeTab.value = id
-  editingDirty.value = false
-}
 const tabs: { id: TabID; label: string }[] = [
   { id: 'settings', label: '分组设置' },
   { id: 'subscribes', label: '订阅' },

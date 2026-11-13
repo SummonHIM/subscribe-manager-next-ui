@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AdminTableHeader: typeof import('./src/components/AdminTableHeader.vue')['default']
     Avatar: typeof import('primevue/avatar')['default']
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
@@ -24,7 +25,6 @@ declare module 'vue' {
     Form: typeof import('@primevue/forms/form')['default']
     GlobalFooter: typeof import('./src/components/GlobalFooter.vue')['default']
     GlobalMenubar: typeof import('./src/components/GlobalMenubar.vue')['default']
-    GlobalToolbar: typeof import('./src/components/GlobalToolbar.vue')['default']
     GroupShareEditor: typeof import('./src/components/GroupShareEditor.vue')['default']
     GroupShares: typeof import('./src/components/GroupShares.vue')['default']
     GroupSubscribe: typeof import('./src/components/GroupSubscribe.vue')['default']

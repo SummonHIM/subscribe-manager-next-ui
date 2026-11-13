@@ -16,29 +16,13 @@
     class="user-table"
   >
     <template #header>
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="section-title">分组用户</span>
-        <div class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
-          <InputText
-            v-model="search"
-            placeholder="搜索用户名或邮箱"
-            size="small"
-            class="w-full min-w-0 sm:w-52"
-            aria-label="搜索用户"
-          />
-          <div class="ml-auto flex items-center gap-1">
-            <Button
-              icon="pi pi-refresh"
-              variant="text"
-              severity="secondary"
-              rounded
-              class="shrink-0"
-              aria-label="刷新"
-              @click="onRefreshTable"
-            />
-          </div>
-        </div>
-      </div>
+      <AdminTableHeader
+        v-model="search"
+        title="分组用户"
+        placeholder="搜索用户名或邮箱"
+        search-label="搜索用户"
+        @refresh="onRefreshTable"
+      />
     </template>
 
     <template #empty>
@@ -155,9 +139,10 @@
 <script setup lang="ts">
 import { type Ref, onMounted, onUnmounted, ref, watch } from 'vue'
 
-import type { DataTablePageEvent, DataTableRowDoubleClickEvent } from 'primevue/datatable'
+import type { DataTablePageEvent } from 'primevue/datatable'
 import { useToast } from 'primevue/usetoast'
 
+import { useInlineEditor } from '@/composables/useInlineEditor'
 import {
   deleteGroupUser,
   fetchGroupSubscribes,
@@ -178,9 +163,6 @@ interface SubscribeOption {
 
 const toast = useToast()
 const props = defineProps<GroupUserEditorProps>()
-const emit = defineEmits<{
-  (e: 'editing-state', value: boolean): void
-}>()
 
 const groupUsers: Ref<APIBasicList<APIGroupUsers>> = ref({
   count: 0,
@@ -198,10 +180,13 @@ const search = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 // 行内编辑
-const editingRows: Ref<APIGroupUsers[]> = ref([])
+const { editingRows, isEditing, startEdit, saveRow, cancelRow, onRowDblClick } =
+  useInlineEditor<APIGroupUsers>(async (row) => {
+    const { id } = row
 
-// 通知父组件是否有未保存的编辑
-watch(editingRows, (rows) => emit('editing-state', rows.length > 0))
+    await modifyGroupUser(props.groupId, id, { expire: new Date(row.expire) }, toast)
+    await onRefreshTable()
+  })
 
 // 订阅过期日快捷填充
 const subscribeOptions: Ref<SubscribeOption[]> = ref([])
@@ -233,63 +218,6 @@ watch(search, () => {
     await onRefreshTable()
   }, 300)
 })
-
-// 编辑快照，取消时用于还原
-let editSnapshot: APIGroupUsers | null = null
-
-/**
- * 该行是否正在编辑
- * @param row 行数据
- */
-const isEditing = (row: APIGroupUsers) => {
-  return editingRows.value.some((item) => item.id === row.id)
-}
-
-/**
- * 开始编辑某一行
- * @param row 行数据
- */
-const startEdit = (row: APIGroupUsers) => {
-  // 切换编辑行时，先还原上一行未保存的修改
-  const current = editingRows.value[0]
-  if (current && current.id !== row.id && editSnapshot) {
-    Object.assign(current, editSnapshot)
-  }
-
-  editSnapshot = { ...row }
-  editingRows.value = [row]
-}
-
-/** 双击行进入编辑 */
-const onRowDblClick = (event: DataTableRowDoubleClickEvent) => {
-  const target = event.originalEvent.target as HTMLElement | null
-  if (target?.closest('input, button, textarea, select, a')) return
-
-  if (!isEditing(event.data)) startEdit(event.data)
-}
-
-/**
- * 保存行内编辑
- * @param row 正在编辑的行
- */
-const saveRow = async (row: APIGroupUsers) => {
-  const { id } = row
-
-  await modifyGroupUser(props.groupId, id, { expire: new Date(row.expire) }, toast)
-  editSnapshot = null
-  editingRows.value = editingRows.value.filter((item) => item.id !== id)
-  await onRefreshTable()
-}
-
-/**
- * 取消行内编辑并还原
- * @param row 正在编辑的行
- */
-const cancelRow = (row: APIGroupUsers) => {
-  if (editSnapshot) Object.assign(row, editSnapshot)
-  editSnapshot = null
-  editingRows.value = editingRows.value.filter((item) => item.id !== row.id)
-}
 
 /**
  * 日期选择器回填

@@ -17,37 +17,15 @@
     class="subscribe-table"
   >
     <template #header>
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="section-title">分组订阅</span>
-        <div class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
-          <InputText
-            v-model="search"
-            placeholder="搜索名称或链接"
-            size="small"
-            class="w-full min-w-0 sm:w-52"
-            aria-label="搜索订阅"
-          />
-          <div class="ml-auto flex items-center gap-1">
-            <Button
-              icon="pi pi-refresh"
-              variant="text"
-              severity="secondary"
-              rounded
-              class="shrink-0"
-              aria-label="刷新"
-              @click="onRefreshTable"
-            />
-            <Button
-              icon="pi pi-plus"
-              rounded
-              variant="text"
-              class="shrink-0"
-              aria-label="新建订阅"
-              @click="onEditorOpenNew"
-            />
-          </div>
-        </div>
-      </div>
+      <AdminTableHeader
+        v-model="search"
+        title="分组订阅"
+        placeholder="搜索名称或链接"
+        search-label="搜索订阅"
+        show-create
+        @refresh="onRefreshTable"
+        @create="onEditorOpenNew"
+      />
     </template>
 
     <template #empty>
@@ -244,13 +222,10 @@
 import { type Ref, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
-import type {
-  DataTablePageEvent,
-  DataTableRowDoubleClickEvent,
-  DataTableRowReorderEvent,
-} from 'primevue/datatable'
+import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
 import { useToast } from 'primevue/usetoast'
 
+import { useInlineEditor } from '@/composables/useInlineEditor'
 import { convertFromApiOptions, convertToApiOptions, converterDefaultOptions } from '@/converter'
 import {
   createGroupSubscribe,
@@ -275,9 +250,6 @@ interface GroupSubscribesEditorProps {
 
 const toast = useToast()
 const props = defineProps<GroupSubscribesEditorProps>()
-const emit = defineEmits<{
-  (e: 'editing-state', value: boolean): void
-}>()
 
 const groupSubscribes: Ref<APIBasicList<APIGroupSubscribes>> = ref({
   count: 0,
@@ -295,10 +267,13 @@ const search = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 // 行内编辑
-const editingRows: Ref<APIGroupSubscribes[]> = ref([])
+const { editingRows, isEditing, startEdit, saveRow, cancelRow, onRowDblClick } =
+  useInlineEditor<APIGroupSubscribes>(async (row) => {
+    const { id, ...values } = row
 
-// 通知父组件是否有未保存的编辑
-watch(editingRows, (rows) => emit('editing-state', rows.length > 0))
+    await modifyGroupSubscribe(props.groupId, id, values, toast)
+    await onRefreshTable()
+  })
 
 // 新建对话框
 const editorVisible = ref(false)
@@ -342,63 +317,6 @@ watch(search, () => {
     await onRefreshTable()
   }, 300)
 })
-
-// 编辑快照，取消时用于还原
-let editSnapshot: APIGroupSubscribes | null = null
-
-/**
- * 该行是否正在编辑
- * @param row 行数据
- */
-const isEditing = (row: APIGroupSubscribes) => {
-  return editingRows.value.some((item) => item.id === row.id)
-}
-
-/**
- * 开始编辑某一行
- * @param row 行数据
- */
-const startEdit = (row: APIGroupSubscribes) => {
-  // 切换编辑行时，先还原上一行未保存的修改
-  const current = editingRows.value[0]
-  if (current && current.id !== row.id && editSnapshot) {
-    Object.assign(current, editSnapshot)
-  }
-
-  editSnapshot = { ...row }
-  editingRows.value = [row]
-}
-
-/** 双击行进入编辑 */
-const onRowDblClick = (event: DataTableRowDoubleClickEvent) => {
-  const target = event.originalEvent.target as HTMLElement | null
-  if (target?.closest('input, button, textarea, select, a')) return
-
-  if (!isEditing(event.data)) startEdit(event.data)
-}
-
-/**
- * 保存行内编辑
- * @param row 正在编辑的行
- */
-const saveRow = async (row: APIGroupSubscribes) => {
-  const { id, ...values } = row
-
-  await modifyGroupSubscribe(props.groupId, id, values, toast)
-  editSnapshot = null
-  editingRows.value = editingRows.value.filter((item) => item.id !== id)
-  await onRefreshTable()
-}
-
-/**
- * 取消行内编辑并还原
- * @param row 正在编辑的行
- */
-const cancelRow = (row: APIGroupSubscribes) => {
-  if (editSnapshot) Object.assign(row, editSnapshot)
-  editSnapshot = null
-  editingRows.value = editingRows.value.filter((item) => item.id !== row.id)
-}
 
 /** 编辑器表单验证器 */
 const editorResolver = ({ values }: FormResolverOptions) => {
