@@ -1,43 +1,22 @@
 <template>
-  <div class="bg-neutral-50 dark:bg-neutral-900">
-    <div
-      class="mx-auto pt-8 pb-8 max-w-[90%] md:max-w-[85%] lg:max-w-[70%] flex flex-col items-center sm:flex-row sm:justify-between"
-    >
-      <h2 class="text-3xl mt-8 mb-8 text-slate-600 dark:text-slate-300">页面未找到！</h2>
-      <p class="text-slate-600 dark:text-slate-300">404 Not Found</p>
+  <div class="page-container">
+    <div class="surface-card flex flex-col items-center py-16 text-center">
+      <i class="pi pi-compass text-3xl text-neutral-400 dark:text-neutral-500"></i>
+      <h1 class="mt-4 text-lg font-medium text-neutral-900 dark:text-neutral-100">页面未找到</h1>
+      <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">404 Not Found</p>
+      <RouterLink
+        to="/"
+        class="mt-6 inline-flex items-center gap-1.5 rounded-md bg-neutral-900 px-3 py-2 text-sm text-white transition-colors hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+      >
+        <i class="pi pi-arrow-left text-xs"></i>
+        返回首页
+      </RouterLink>
     </div>
-  </div>
-
-  <div class="mx-auto pt-8 pb-8 max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
-    <GlobalToolbar v-model="topMenuItemsSelected" :buttons="topMenuItems" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-
-import type { GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
-
 defineOptions({
   name: 'NotFoundPage',
 })
-
-const topMenuItems: GlobalTabbarButtonProps[] = [
-  {
-    id: 'back',
-    label: '返回',
-    icon: 'pi pi-arrow-left',
-    hidden: false,
-    href: '/',
-  },
-  {
-    id: 'back-hidden',
-    label: '返回',
-    icon: 'pi pi-arrow-left',
-    hidden: true,
-  },
-]
-const topMenuItemsSelected = ref<GlobalTabbarButtonProps>(
-  topMenuItems.find((item) => item.id === 'back-hidden')!,
-)
 </script>

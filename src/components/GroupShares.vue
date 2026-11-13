@@ -1,57 +1,55 @@
 <template>
-  <Card>
-    <template #title>
+  <div
+    v-bind="$attrs"
+    class="rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm sm:p-5 dark:border-neutral-800 dark:bg-neutral-900"
+  >
+    <h3 class="text-[15px] font-medium text-neutral-900 dark:text-neutral-100">
       {{ props.share.name }}
-    </template>
+    </h3>
 
-    <template #content>
-      <template v-for="(info, index) in displayInfos" :key="index">
-        <div v-if="info.value" class="mb-4 items-center">
-          <InputGroup>
-            <FloatLabel variant="on">
-              <InputText
-                :id="`ga-display-${props.share.id}-${index}`"
-                :type="
-                  info.type === 'password'
-                    ? isPasswordVisible(index)
-                      ? 'text'
-                      : 'password'
-                    : inputTypeGenerator(info.type)
-                "
-                fluid
-                :value="info.value"
-                :placeholder="info.value"
-                readonly
-              />
-              <label :for="`ga-display-${props.share.id}-${index}`">{{ info.label }}</label>
-            </FloatLabel>
-            <InputGroupAddon>
-              <Button
-                v-if="info.type === 'link' && isValidUrl(info.value)"
-                icon="pi pi-external-link"
-                severity="secondary"
-                variant="text"
-                @click="openExternalLink(info.value)"
-              />
-              <Button
-                v-if="info.type === 'password'"
-                :icon="isPasswordVisible(index) ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                severity="secondary"
-                variant="text"
-                @click="togglePassword(index)"
-              />
-              <Button
-                icon="pi pi-clipboard"
-                severity="secondary"
-                variant="text"
-                @click="copyText(info.value)"
-              />
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-      </template>
-    </template>
-  </Card>
+    <dl class="mt-3 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+      <div v-for="(info, index) in displayInfos" v-show="info.value" :key="index" class="min-w-0">
+        <dt class="text-xs text-neutral-400 dark:text-neutral-500">{{ info.label }}</dt>
+        <dd class="mt-1 flex items-center gap-1">
+          <span
+            class="min-w-0 flex-1 truncate font-mono text-sm text-neutral-700 dark:text-neutral-200"
+            :title="info.type === 'password' && !isPasswordVisible(index) ? '' : (info.value ?? '')"
+          >
+            {{ valueText(info, index) }}
+          </span>
+          <Button
+            v-if="info.type === 'link' && isValidUrl(info.value)"
+            icon="pi pi-external-link"
+            text
+            rounded
+            size="small"
+            severity="secondary"
+            aria-label="打开链接"
+            @click="openExternalLink(info.value)"
+          />
+          <Button
+            v-if="info.type === 'password'"
+            :icon="isPasswordVisible(index) ? 'pi pi-eye-slash' : 'pi pi-eye'"
+            text
+            rounded
+            size="small"
+            severity="secondary"
+            :aria-label="isPasswordVisible(index) ? '隐藏密码' : '显示密码'"
+            @click="togglePassword(index)"
+          />
+          <Button
+            icon="pi pi-copy"
+            text
+            rounded
+            size="small"
+            severity="secondary"
+            aria-label="复制"
+            @click="copyText(info.value)"
+          />
+        </dd>
+      </div>
+    </dl>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -116,6 +114,18 @@ const isValidUrl = (url: string | null): boolean => {
 }
 
 /**
+ * 生成要显示的文本（密码未显示时以掩码代替）
+ * @param info 信息
+ * @param index 第几行
+ */
+const valueText = (info: DisplayInfos, index: number): string => {
+  if (info.type === 'password' && !isPasswordVisible(index)) {
+    return '••••••••'
+  }
+  return info.value ?? ''
+}
+
+/**
  * 在新建窗口中打开链接
  * @param url 链接
  */
@@ -172,21 +182,6 @@ const togglePassword = (index: number) => {
   } else {
     // 不在数组里 → 加入
     arr.push(index)
-  }
-}
-
-/**
- * 输入类型生成器
- * @param type 类型
- */
-const inputTypeGenerator = (type: 'link' | 'password' | 'text' | string): string => {
-  switch (type) {
-    case 'link':
-      return 'text'
-    case 'text':
-      return 'text'
-    default:
-      return 'text'
   }
 }
 </script>

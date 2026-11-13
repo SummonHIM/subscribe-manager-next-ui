@@ -5,72 +5,183 @@
     :first="tablePaginatorFirst"
     :totalRecords="groupShares.count"
     :rowsPerPageOptions="[10, 20, 50, 100]"
+    v-model:editingRows="editingRows"
+    editMode="row"
     @page="onTablePaginatorChange"
     @rowReorder="onTableRowReorder"
-    class="whitespace-nowrap"
+    @row-dblclick="onRowDblClick"
     dataKey="id"
+    size="small"
     paginator
     lazy
+    class="share-table"
   >
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xl">分组共享账号</span>
-        <div>
-          <Button
-            icon="pi pi-refresh"
-            variant="text"
-            severity="secondary"
-            rounded
-            @click="onRefreshTable"
+        <span class="section-title">分组共享账号</span>
+        <div class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          <InputText
+            v-model="search"
+            placeholder="搜索名称或账号"
+            size="small"
+            class="w-full min-w-0 sm:w-52"
+            aria-label="搜索共享账号"
           />
-          <Button icon="pi pi-plus" variant="text" rounded @click="onEditorOpenNew" />
+          <div class="ml-auto flex items-center gap-1">
+            <Button
+              icon="pi pi-refresh"
+              variant="text"
+              severity="secondary"
+              rounded
+              class="shrink-0"
+              aria-label="刷新"
+              @click="onRefreshTable"
+            />
+            <Button
+              icon="pi pi-plus"
+              variant="text"
+              rounded
+              class="shrink-0"
+              aria-label="新建共享账号"
+              @click="onEditorOpenNew"
+            />
+          </div>
         </div>
       </div>
     </template>
 
-    <Column rowReorder headerStyle="width: 2rem" />
-    <!-- <Column field="id" header="ID"></Column> -->
-    <Column field="name" header="名称"></Column>
-    <Column field="account" header="账号"></Column>
-    <Column field="password" header="密码">
+    <Column rowReorder />
+    <Column field="name" header="共享账号" style="width: 100%">
       <template #body="slotProps">
-        {{ '●'.repeat(slotProps.data.password.length) }}
+        <div class="min-w-0">
+          <div class="line-clamp-1 break-all font-medium text-neutral-900 dark:text-neutral-100">
+            {{ slotProps.data.name }}
+          </div>
+          <div
+            class="mt-0.5 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400"
+          >
+            <span class="line-clamp-1 break-all font-mono" :title="slotProps.data.account">
+              {{ slotProps.data.account }}
+            </span>
+            <span
+              class="shrink-0 text-neutral-400 tabular-nums dark:text-neutral-500"
+              :title="slotProps.data.password"
+            >
+              {{ '●'.repeat(slotProps.data.password.length) }}
+            </span>
+          </div>
+          <div
+            v-if="slotProps.data.manage_url"
+            class="mt-0.5 line-clamp-1 break-all text-xs text-neutral-400 dark:text-neutral-500"
+            :title="slotProps.data.manage_url"
+          >
+            网站：{{ slotProps.data.manage_url }}
+          </div>
+          <div
+            v-if="slotProps.data.manage_aff"
+            class="mt-0.5 line-clamp-1 break-all text-xs text-neutral-400 dark:text-neutral-500"
+            :title="slotProps.data.manage_aff"
+          >
+            邀请码：{{ slotProps.data.manage_aff }}
+          </div>
+        </div>
+      </template>
+      <template #editor="{ data }">
+        <div class="flex flex-col gap-1">
+          <InputText
+            v-model="data.name"
+            size="small"
+            fluid
+            placeholder="名称"
+            @keydown.enter.prevent="saveRow(data)"
+            @keydown.esc.prevent="cancelRow(data)"
+          />
+          <InputText
+            v-model="data.account"
+            size="small"
+            fluid
+            placeholder="账号"
+            @keydown.enter.prevent="saveRow(data)"
+            @keydown.esc.prevent="cancelRow(data)"
+          />
+          <InputText
+            v-model="data.password"
+            size="small"
+            fluid
+            placeholder="密码"
+            @keydown.enter.prevent="saveRow(data)"
+            @keydown.esc.prevent="cancelRow(data)"
+          />
+          <div class="grid grid-cols-1 gap-1 sm:grid-cols-2">
+            <InputText
+              v-model="data.manage_url"
+              size="small"
+              fluid
+              placeholder="网站"
+              @keydown.enter.prevent="saveRow(data)"
+              @keydown.esc.prevent="cancelRow(data)"
+            />
+            <InputText
+              v-model="data.manage_aff"
+              size="small"
+              fluid
+              placeholder="邀请码"
+              @keydown.enter.prevent="saveRow(data)"
+              @keydown.esc.prevent="cancelRow(data)"
+            />
+          </div>
+        </div>
       </template>
     </Column>
-    <Column field="manage_url" header="网站"></Column>
-    <Column field="manage_aff" header="邀请码"></Column>
-    <Column field="date_created" header="创建日">
+    <Column style="width: 7rem">
       <template #body="slotProps">
-        {{ new Date(slotProps.data.date_created).toLocaleString() }}
-      </template>
-    </Column>
-
-    <Column style="min-width: 7rem">
-      <template #body="slotProps">
-        <Button
-          icon="pi pi-pencil"
-          variant="text"
-          rounded
-          class="mr-2"
-          @click="onEditorOpenEdit(slotProps.data)"
-        />
-        <Button
-          icon="pi pi-trash"
-          variant="text"
-          rounded
-          severity="danger"
-          @click="onOpenDeleteDialog(slotProps.data.id)"
-        />
+        <div class="flex items-center justify-center gap-1">
+          <template v-if="isEditing(slotProps.data)">
+            <Button
+              icon="pi pi-check"
+              severity="success"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="保存"
+              @click="saveRow(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-times"
+              severity="secondary"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="取消"
+              @click="cancelRow(slotProps.data)"
+            />
+          </template>
+          <template v-else>
+            <Button
+              icon="pi pi-pencil"
+              severity="secondary"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="编辑共享账号"
+              @click="startEdit(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-trash"
+              severity="danger"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="删除共享账号"
+              @click="onOpenDeleteDialog(slotProps.data.id)"
+            />
+          </template>
+        </div>
       </template>
     </Column>
   </DataTable>
 
-  <Dialog v-model:visible="editorVisible" modal :style="{ width: '30rem' }">
-    <template #header>
-      <template v-if="editorGroupSharesID >= 0"><p class="text-xl">编辑共享账号</p></template>
-      <template v-else><p class="text-xl">新建共享账号</p></template>
-    </template>
-
+  <Dialog v-model:visible="editorVisible" modal :style="{ width: '30rem' }" header="新建共享账号">
     <Form
       v-slot="$form"
       :initialValues="editorInitialValues"
@@ -124,7 +235,7 @@
         {{ $form.manage_aff.error?.message }}
       </Message>
 
-      <div class="flex justify-end gap-2 mt-4">
+      <div class="mt-4 flex justify-end gap-2">
         <Button label="取消" icon="pi pi-times" text @click="editorVisible = false" />
         <Button label="恢复" icon="pi pi-refresh" text @click="$form.reset()" />
         <Button label="保存" icon="pi pi-check" type="submit" />
@@ -143,10 +254,14 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, onMounted, ref } from 'vue'
+import { type Ref, onMounted, ref, watch } from 'vue'
 
 import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
-import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
+import type {
+  DataTablePageEvent,
+  DataTableRowDoubleClickEvent,
+  DataTableRowReorderEvent,
+} from 'primevue/datatable'
 import { useToast } from 'primevue/usetoast'
 
 import {
@@ -177,7 +292,14 @@ const groupShares: Ref<APIBasicList<APIGroupShares>> = ref({
 const tablePaginatorRows = ref(10)
 const tablePaginatorFirst = ref(0)
 
-// 编辑器
+// 搜索
+const search = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+// 行内编辑
+const editingRows: Ref<APIGroupShares[]> = ref([])
+
+// 新建对话框
 const editorVisible = ref(false)
 const editorInitialValues: Ref<APIGroupSharesEdit> = ref({
   name: '',
@@ -189,20 +311,88 @@ const editorInitialValues: Ref<APIGroupSharesEdit> = ref({
   order: -1,
   date_created: '',
 })
-const editorGroupSharesID: Ref<number> = ref(-1)
 
-// 删除
+// 删除对话框
 const deleteVisible = ref(false)
 const deleteGroupSharesID: Ref<number> = ref(-1)
 
 /** 刷新表格 */
 const onRefreshTable = async () => {
+  editingRows.value = []
   groupShares.value = await fetchGroupShares(
     props.groupId,
     tablePaginatorRows.value,
     tablePaginatorFirst.value,
     toast,
+    search.value,
   )
+}
+
+/** 搜索变化（防抖） */
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+
+  searchTimer = setTimeout(async () => {
+    tablePaginatorFirst.value = 0
+    await onRefreshTable()
+  }, 300)
+})
+
+// 编辑快照，取消时用于还原
+let editSnapshot: APIGroupShares | null = null
+
+/**
+ * 该行是否正在编辑
+ * @param row 行数据
+ */
+const isEditing = (row: APIGroupShares) => {
+  return editingRows.value.some((item) => item.id === row.id)
+}
+
+/**
+ * 开始编辑某一行
+ * @param row 行数据
+ */
+const startEdit = (row: APIGroupShares) => {
+  // 切换编辑行时，先还原上一行未保存的修改
+  const current = editingRows.value[0]
+  if (current && current.id !== row.id && editSnapshot) {
+    Object.assign(current, editSnapshot)
+  }
+
+  editSnapshot = { ...row }
+  editingRows.value = [row]
+}
+
+/** 双击行进入编辑 */
+const onRowDblClick = (event: DataTableRowDoubleClickEvent) => {
+  const target = event.originalEvent.target as HTMLElement | null
+  if (target?.closest('input, button, textarea, select, a')) return
+
+  if (!isEditing(event.data)) startEdit(event.data)
+}
+
+/**
+ * 保存行内编辑
+ * @param row 正在编辑的行
+ */
+const saveRow = async (row: APIGroupShares) => {
+  const { id, ...values } = row
+
+  await modifyGroupShare(props.groupId, id, values, toast)
+  editSnapshot = null
+  editingRows.value = editingRows.value.filter((item) => item.id !== id)
+  await onRefreshTable()
+}
+
+/**
+ * 取消行内编辑并还原
+ * @param row 正在编辑的行
+ */
+const cancelRow = (row: APIGroupShares) => {
+  if (editSnapshot) Object.assign(row, editSnapshot)
+  editSnapshot = null
+  editingRows.value = editingRows.value.filter((item) => item.id !== row.id)
 }
 
 /** 编辑器表单验证器 */
@@ -264,48 +454,27 @@ const onEditorOpenNew = () => {
     order: -1,
     date_created: '',
   }
-  editorGroupSharesID.value = -1
   editorVisible.value = true
 }
 
 /**
- * 打开修改编辑器
- * @param ga 原分组订阅
- */
-const onEditorOpenEdit = (ga: APIGroupShares) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, ...safeInitial } = ga
-  editorInitialValues.value = { ...safeInitial }
-  editorGroupSharesID.value = ga.id
-  editorVisible.value = true
-}
-
-/**
- * 编辑器保存事件
+ * 新建共享账号保存事件
  * @param event 事件
  */
 const onEditorSave = async (event: FormSubmitEvent) => {
-  if (event.valid) {
-    if (editorGroupSharesID.value >= 0) {
-      const values: APIGroupSharesEdit = {
-        ...editorInitialValues.value,
-        ...event.values,
-      }
-      await modifyGroupShare(props.groupId, editorGroupSharesID.value, values, toast)
-    } else {
-      const values: APIGroupSharesEdit = {
-        ...editorInitialValues.value,
-        ...event.values,
-        group: props.groupId,
-        order: groupShares.value.count + 1,
-        date_created: new Date().toISOString(),
-      }
-      await createGroupShare(props.groupId, values, toast)
-    }
+  if (!event.valid) return
 
-    await onRefreshTable()
-    editorVisible.value = false
+  const values: APIGroupSharesEdit = {
+    ...editorInitialValues.value,
+    ...event.values,
+    group: props.groupId,
+    order: groupShares.value.count + 1,
+    date_created: new Date().toISOString(),
   }
+
+  await createGroupShare(props.groupId, values, toast)
+  await onRefreshTable()
+  editorVisible.value = false
 }
 
 /**
@@ -332,7 +501,14 @@ const onDeleteConfirm = async () => {
 const onTablePaginatorChange = async (event: DataTablePageEvent) => {
   tablePaginatorRows.value = event.rows
   tablePaginatorFirst.value = event.first
-  groupShares.value = await fetchGroupShares(props.groupId, event.rows, event.first, toast)
+  editingRows.value = []
+  groupShares.value = await fetchGroupShares(
+    props.groupId,
+    event.rows,
+    event.first,
+    toast,
+    search.value,
+  )
 }
 
 /**

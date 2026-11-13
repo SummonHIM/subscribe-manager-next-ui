@@ -1,28 +1,33 @@
 <template>
-  <Menubar v-bind="$attrs" class="mx-1 mt-1 mb-1">
-    <template #start>
-      <Button asChild v-slot="slotProps" severity="contrast" variant="text">
-        <RouterLink to="/" :class="slotProps.class">
-          <Avatar :image="FavIcon" shape="circle" />
-        </RouterLink>
+  <header
+    v-bind="$attrs"
+    class="sticky top-0 z-40 bg-white/90 backdrop-blur dark:bg-neutral-950/90"
+  >
+    <div class="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
+      <RouterLink
+        to="/"
+        class="flex items-center gap-2 rounded-md p-1 transition-opacity hover:opacity-80"
+      >
+        <Avatar :image="FavIcon" shape="circle" class="!h-7 !w-7" />
+        <span class="text-sm font-medium text-neutral-700 dark:text-neutral-200">订阅管理</span>
+      </RouterLink>
+
+      <Button
+        severity="secondary"
+        variant="text"
+        rounded
+        aria-haspopup="true"
+        aria-controls="user_menu"
+        @click="toggleUserMenu"
+      >
+        <span class="hidden pr-1 text-xs text-neutral-500 sm:block dark:text-neutral-400">
+          {{ applicationStore.user?.username.toUpperCase() }}
+        </span>
+        <Avatar :image="userGravatarUrl" shape="circle" class="!h-8 !w-8" />
       </Button>
-    </template>
-    <template #end>
-      <div class="flex items-center gap-2">
-        <Button
-          severity="secondary"
-          variant="text"
-          @click="toggleUserMenu"
-          aria-haspopup="true"
-          aria-controls="user_menu"
-        >
-          <div class="hidden sm:block">{{ applicationStore.user?.username.toUpperCase() }}</div>
-          <Avatar :image="userGravatarUrl" shape="circle" />
-        </Button>
-        <TieredMenu ref="userMenuMethods" id="user_menu" :model="userMenuItems" popup />
-      </div>
-    </template>
-  </Menubar>
+      <TieredMenu ref="userMenuMethods" id="user_menu" :model="userMenuItems" popup />
+    </div>
+  </header>
 
   <Dialog v-model:visible="logoutVisible" modal :style="{ width: '30rem' }" header="登出确认">
     <p>确定要登出吗？</p>

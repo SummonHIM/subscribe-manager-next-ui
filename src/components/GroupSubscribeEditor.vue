@@ -5,82 +5,176 @@
     :first="tablePaginatorFirst"
     :totalRecords="groupSubscribes.count"
     :rowsPerPageOptions="[10, 20, 50, 100]"
+    v-model:editingRows="editingRows"
+    editMode="row"
     @page="onTablePaginatorChange"
     @rowReorder="onTableRowReorder"
-    class="whitespace-nowrap"
+    @row-dblclick="onRowDblClick"
     dataKey="id"
+    size="small"
     paginator
     lazy
+    class="subscribe-table"
   >
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xl">分组订阅</span>
-        <div>
-          <Button
-            icon="pi pi-refresh"
-            variant="text"
-            severity="secondary"
-            rounded
-            @click="onRefreshTable"
+        <span class="section-title">分组订阅</span>
+        <div class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          <InputText
+            v-model="search"
+            placeholder="搜索名称或链接"
+            size="small"
+            class="w-full min-w-0 sm:w-52"
+            aria-label="搜索订阅"
           />
-          <Button icon="pi pi-plus" rounded variant="text" @click="onEditorOpenNew" />
+          <div class="ml-auto flex items-center gap-1">
+            <Button
+              icon="pi pi-refresh"
+              variant="text"
+              severity="secondary"
+              rounded
+              class="shrink-0"
+              aria-label="刷新"
+              @click="onRefreshTable"
+            />
+            <Button
+              icon="pi pi-plus"
+              rounded
+              variant="text"
+              class="shrink-0"
+              aria-label="新建订阅"
+              @click="onEditorOpenNew"
+            />
+          </div>
         </div>
       </div>
     </template>
 
-    <Column rowReorder headerStyle="width: 2rem" />
-    <!-- <Column field="id" header="ID"></Column> -->
-    <Column field="name" header="名称"></Column>
-    <Column field="url" header="链接"></Column>
-    <Column field="date_created" header="创建日">
+    <Column rowReorder />
+    <Column field="name" header="订阅" style="width: 100%">
       <template #body="slotProps">
-        {{ new Date(slotProps.data.date_created).toLocaleString() }}
+        <div class="min-w-0">
+          <div class="line-clamp-1 break-all font-medium text-neutral-900 dark:text-neutral-100">
+            {{ slotProps.data.name }}
+          </div>
+          <div
+            class="mt-0.5 line-clamp-1 break-all font-mono text-xs text-neutral-500 dark:text-neutral-400"
+            :title="slotProps.data.url"
+          >
+            {{ slotProps.data.url }}
+          </div>
+          <div class="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+            创建于 {{ new Date(slotProps.data.date_created).toLocaleString() }}
+          </div>
+        </div>
+      </template>
+      <template #editor="{ data }">
+        <div class="flex flex-col gap-1">
+          <InputText
+            v-model="data.name"
+            size="small"
+            fluid
+            placeholder="订阅名称"
+            @keydown.enter.prevent="saveRow(data)"
+            @keydown.esc.prevent="cancelRow(data)"
+          />
+          <InputText
+            v-model="data.url"
+            size="small"
+            fluid
+            placeholder="订阅链接"
+            @keydown.enter.prevent="saveRow(data)"
+            @keydown.esc.prevent="cancelRow(data)"
+          />
+        </div>
       </template>
     </Column>
-    <Column field="converter" header="订阅转换">
+    <Column
+      field="converter"
+      header="订阅转换"
+      style="width: 6rem"
+      headerStyle="width: 6rem; white-space: nowrap"
+    >
       <template #body="slotProps">
-        {{ slotProps.data.converter ? '开启' : '关闭' }}
+        <span
+          class="whitespace-nowrap text-xs"
+          :class="
+            slotProps.data.converter
+              ? 'text-sky-600 dark:text-sky-400'
+              : 'text-neutral-400 dark:text-neutral-500'
+          "
+        >
+          {{ slotProps.data.converter ? '开启转换' : '关闭转换' }}
+        </span>
+      </template>
+      <template #editor="{ data }">
+        <div class="flex items-center gap-2">
+          <ToggleSwitch v-model="data.converter" />
+          <span class="whitespace-nowrap text-xs">
+            {{ data.converter ? '开启转换' : '关闭转换' }}
+          </span>
+        </div>
       </template>
     </Column>
-    <Column field="converter_options" header="订阅转换选项">
+    <Column style="width: 8rem">
       <template #body="slotProps">
-        <Button
-          icon="pi pi-pencil"
-          severity="secondary"
-          variant="text"
-          rounded
-          class="mr-2"
-          @click="onOpenConverterDialog(slotProps.data.id, slotProps.data.converter_options)"
-        />
-        {{ alertServerConverterOption(slotProps.data.converter_options) }}
-      </template>
-    </Column>
-    <Column style="min-width: 7rem">
-      <template #body="slotProps">
-        <Button
-          icon="pi pi-pencil"
-          variant="text"
-          rounded
-          class="mr-2"
-          @click="onEditorOpenEdit(slotProps.data)"
-        />
-        <Button
-          icon="pi pi-trash"
-          variant="text"
-          rounded
-          severity="danger"
-          @click="onOpenDeleteDialog(slotProps.data.id)"
-        />
+        <div class="flex items-center justify-center gap-1">
+          <template v-if="isEditing(slotProps.data)">
+            <Button
+              icon="pi pi-check"
+              severity="success"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="保存"
+              @click="saveRow(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-times"
+              severity="secondary"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="取消"
+              @click="cancelRow(slotProps.data)"
+            />
+          </template>
+          <template v-else>
+            <Button
+              icon="pi pi-pencil"
+              severity="secondary"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="编辑订阅"
+              @click="startEdit(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-sliders-h"
+              severity="secondary"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="编辑订阅转换选项"
+              :title="alertServerConverterOption(slotProps.data.converter_options) ?? ''"
+              @click="onOpenConverterDialog(slotProps.data.id, slotProps.data.converter_options)"
+            />
+            <Button
+              icon="pi pi-trash"
+              severity="danger"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="删除订阅"
+              @click="onOpenDeleteDialog(slotProps.data.id)"
+            />
+          </template>
+        </div>
       </template>
     </Column>
   </DataTable>
 
-  <Dialog v-model:visible="editorVisible" modal :style="{ width: '30rem' }">
-    <template #header>
-      <template v-if="editorGroupSubscribesID >= 0"><p class="text-xl">编辑订阅</p></template>
-      <template v-else><p class="text-xl">新建订阅</p></template>
-    </template>
-
+  <Dialog v-model:visible="editorVisible" modal :style="{ width: '30rem' }" header="新建订阅">
     <Form
       v-slot="$form"
       :initialValues="editorInitialValues"
@@ -103,12 +197,12 @@
         {{ $form.url.error?.message }}
       </Message>
 
-      <div class="flex gap-2 mt-2">
+      <div class="mt-2 flex gap-2">
         <ToggleSwitch name="converter" />
         <p>订阅转换</p>
       </div>
 
-      <div class="flex justify-end gap-2 mt-4">
+      <div class="mt-4 flex justify-end gap-2">
         <Button label="取消" icon="pi pi-times" text @click="editorVisible = false" />
         <Button label="恢复" icon="pi pi-refresh" text @click="$form.reset()" />
         <Button label="保存" icon="pi pi-check" type="submit" />
@@ -141,10 +235,14 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, onMounted, ref } from 'vue'
+import { type Ref, onMounted, ref, watch } from 'vue'
 
 import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
-import type { DataTablePageEvent, DataTableRowReorderEvent } from 'primevue/datatable'
+import type {
+  DataTablePageEvent,
+  DataTableRowDoubleClickEvent,
+  DataTableRowReorderEvent,
+} from 'primevue/datatable'
 import { useToast } from 'primevue/usetoast'
 
 import { convertFromApiOptions, convertToApiOptions, converterDefaultOptions } from '@/converter'
@@ -183,7 +281,14 @@ const groupSubscribes: Ref<APIBasicList<APIGroupSubscribes>> = ref({
 const tablePaginatorRows = ref(10)
 const tablePaginatorFirst = ref(0)
 
-// 编辑器对话框
+// 搜索
+const search = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+// 行内编辑
+const editingRows: Ref<APIGroupSubscribes[]> = ref([])
+
+// 新建对话框
 const editorVisible = ref(false)
 const editorInitialValues: Ref<APIGroupSubscribesEdit> = ref({
   name: '',
@@ -194,7 +299,6 @@ const editorInitialValues: Ref<APIGroupSubscribesEdit> = ref({
   date_created: '',
   converter_options: null,
 })
-const editorGroupSubscribesID: Ref<number> = ref(-1)
 
 // 删除对话框
 const deleteVisible = ref(false)
@@ -207,12 +311,81 @@ const converterGroupSubscribesID: Ref<number> = ref(-1)
 
 /** 刷新表格 */
 const onRefreshTable = async () => {
+  editingRows.value = []
   groupSubscribes.value = await fetchGroupSubscribes(
     props.groupId,
     tablePaginatorRows.value,
     tablePaginatorFirst.value,
     toast,
+    search.value,
   )
+}
+
+/** 搜索变化（防抖） */
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+
+  searchTimer = setTimeout(async () => {
+    tablePaginatorFirst.value = 0
+    await onRefreshTable()
+  }, 300)
+})
+
+// 编辑快照，取消时用于还原
+let editSnapshot: APIGroupSubscribes | null = null
+
+/**
+ * 该行是否正在编辑
+ * @param row 行数据
+ */
+const isEditing = (row: APIGroupSubscribes) => {
+  return editingRows.value.some((item) => item.id === row.id)
+}
+
+/**
+ * 开始编辑某一行
+ * @param row 行数据
+ */
+const startEdit = (row: APIGroupSubscribes) => {
+  // 切换编辑行时，先还原上一行未保存的修改
+  const current = editingRows.value[0]
+  if (current && current.id !== row.id && editSnapshot) {
+    Object.assign(current, editSnapshot)
+  }
+
+  editSnapshot = { ...row }
+  editingRows.value = [row]
+}
+
+/** 双击行进入编辑 */
+const onRowDblClick = (event: DataTableRowDoubleClickEvent) => {
+  const target = event.originalEvent.target as HTMLElement | null
+  if (target?.closest('input, button, textarea, select, a')) return
+
+  if (!isEditing(event.data)) startEdit(event.data)
+}
+
+/**
+ * 保存行内编辑
+ * @param row 正在编辑的行
+ */
+const saveRow = async (row: APIGroupSubscribes) => {
+  const { id, ...values } = row
+
+  await modifyGroupSubscribe(props.groupId, id, values, toast)
+  editSnapshot = null
+  editingRows.value = editingRows.value.filter((item) => item.id !== id)
+  await onRefreshTable()
+}
+
+/**
+ * 取消行内编辑并还原
+ * @param row 正在编辑的行
+ */
+const cancelRow = (row: APIGroupSubscribes) => {
+  if (editSnapshot) Object.assign(row, editSnapshot)
+  editSnapshot = null
+  editingRows.value = editingRows.value.filter((item) => item.id !== row.id)
 }
 
 /** 编辑器表单验证器 */
@@ -261,49 +434,28 @@ const onEditorOpenNew = () => {
     date_created: '',
     converter_options: null,
   }
-  editorGroupSubscribesID.value = -1
   editorVisible.value = true
 }
 
 /**
- * 打开修改编辑器
- * @param gs 原分组订阅
- */
-const onEditorOpenEdit = (gs: APIGroupSubscribes) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, ...safeInitial } = gs
-  editorInitialValues.value = { ...safeInitial }
-  editorGroupSubscribesID.value = gs.id
-  editorVisible.value = true
-}
-
-/**
- * 编辑器保存事件
+ * 新建订阅保存事件
  * @param event 事件
  */
 const onEditorSave = async (event: FormSubmitEvent) => {
-  if (event.valid) {
-    if (editorGroupSubscribesID.value >= 0) {
-      const values: APIGroupSubscribesEdit = {
-        ...editorInitialValues.value,
-        ...event.values,
-      }
-      await modifyGroupSubscribe(props.groupId, editorGroupSubscribesID.value, values, toast)
-    } else {
-      const values: APIGroupSubscribesEdit = {
-        ...editorInitialValues.value,
-        ...event.values,
-        group: props.groupId,
-        order: groupSubscribes.value.count + 1,
-        date_created: new Date().toISOString(),
-        converter_options: null,
-      }
-      await createGroupSubscribe(props.groupId, values, toast)
-    }
+  if (!event.valid) return
 
-    await onRefreshTable()
-    editorVisible.value = false
+  const values: APIGroupSubscribesEdit = {
+    ...editorInitialValues.value,
+    ...event.values,
+    group: props.groupId,
+    order: groupSubscribes.value.count + 1,
+    date_created: new Date().toISOString(),
+    converter_options: null,
   }
+
+  await createGroupSubscribe(props.groupId, values, toast)
+  await onRefreshTable()
+  editorVisible.value = false
 }
 
 /**
@@ -364,7 +516,14 @@ const onSaveConverterDialog = async (event: FormSubmitEvent) => {
 const onTablePaginatorChange = async (event: DataTablePageEvent) => {
   tablePaginatorRows.value = event.rows
   tablePaginatorFirst.value = event.first
-  groupSubscribes.value = await fetchGroupSubscribes(props.groupId, event.rows, event.first, toast)
+  editingRows.value = []
+  groupSubscribes.value = await fetchGroupSubscribes(
+    props.groupId,
+    event.rows,
+    event.first,
+    toast,
+    search.value,
+  )
 }
 
 /**

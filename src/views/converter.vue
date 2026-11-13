@@ -1,20 +1,43 @@
 <template>
-  <div class="mx-auto pt-8 pb-8 max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
-    <GlobalToolbar v-model="menuSelected" :buttons="menuItems" class="mb-2" />
+  <div class="page-container">
+    <header class="mb-6 flex items-start gap-2 sm:gap-3">
+      <RouterLink
+        to="/"
+        aria-label="返回"
+        class="-ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+      >
+        <i class="pi pi-arrow-left text-sm"></i>
+      </RouterLink>
 
-    <Card class="mt-9">
-      <template #title>
-        <div class="flex justify-between items-center gap-2 mb-2">
-          <p>令牌</p>
-          <Button icon="pi pi-plus" variant="text" @click="converterStore.addToken('')" />
+      <div class="min-w-0">
+        <h1 class="page-title">融合订阅</h1>
+        <p class="page-subtitle mt-1">把多个令牌合并成一个订阅链接。</p>
+      </div>
+    </header>
+
+    <div class="space-y-4">
+      <!-- 令牌 -->
+      <section class="surface-card p-4 sm:p-5">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="section-title">令牌</h2>
+          <Button
+            icon="pi pi-plus"
+            severity="secondary"
+            variant="text"
+            rounded
+            aria-label="添加令牌"
+            @click="converterStore.addToken('')"
+          />
         </div>
-      </template>
-      <template #content>
-        <template v-if="converterStore.tokens.length < 1">
-          <Message severity="warn" icon="pi pi-exclamation-circle">
-            请添加令牌。<br />可前去订阅中手动导入订阅令牌到此处！
-          </Message>
-        </template>
+
+        <Message
+          v-if="converterStore.tokens.length < 1"
+          severity="warn"
+          variant="simple"
+          icon="pi pi-exclamation-circle"
+        >
+          请添加令牌。可前去订阅中手动导入订阅令牌到此处！
+        </Message>
 
         <TransitionGroup
           name="converter-token-list"
@@ -27,31 +50,34 @@
           leave-to-class="opacity-0 [clip-path:inset(0_0_100%_0)]"
           move-class="transition-transform duration-200"
         >
-          <div v-for="(_, index) in converterStore.tokens" :key="index" class="flex gap-2 mb-2">
-            <FloatLabel variant="on">
-              <InputText
-                :id="`converter-token-${index}`"
-                v-model="converterStore.tokens[index]"
-                type="text"
-                fluid
-              />
-              <label :for="`converter-token-${index}`">令牌 {{ index + 1 }}</label>
-            </FloatLabel>
+          <div
+            v-for="(_, index) in converterStore.tokens"
+            :key="index"
+            class="mb-2 flex gap-2 last:mb-0"
+          >
+            <InputText
+              :id="`converter-token-${index}`"
+              v-model="converterStore.tokens[index]"
+              type="text"
+              class="font-mono text-xs"
+              placeholder="粘贴 UUID 令牌"
+              fluid
+            />
 
             <Button
               icon="pi pi-minus"
               variant="text"
               severity="danger"
+              aria-label="删除令牌"
               @click="converterStore.removeToken(index)"
             />
           </div>
         </TransitionGroup>
-      </template>
-    </Card>
+      </section>
 
-    <Card class="mt-2">
-      <template #title>自定义配置</template>
-      <template #content>
+      <!-- 自定义配置 -->
+      <section class="surface-card p-4 sm:p-5">
+        <h2 class="section-title mb-3">自定义配置</h2>
         <Tabs value="simplify">
           <TabList>
             <Tab value="simplify">简单配置</Tab>
@@ -70,54 +96,52 @@
             </TabPanel>
           </TabPanels>
         </Tabs>
-      </template>
-    </Card>
+      </section>
 
-    <Card class="mt-2">
-      <template #title>生成结果</template>
-      <template #content>
-        <div class="grid grid-cols-6 items-center gap-4 mb-6">
+      <!-- 生成结果 -->
+      <section class="surface-card p-4 sm:p-5">
+        <h2 class="section-title mb-3">生成结果</h2>
+
+        <div class="flex items-center gap-2">
           <InputText
-            :value="converterStore.generated"
-            class="col-span-6 md:col-span-5"
             id="converter-generated"
+            :value="converterStore.generated"
             type="text"
-            placeholder="请先输入UUID令牌…"
-            fluid
+            placeholder="请先输入 UUID 令牌…"
+            class="min-w-0 flex-1 font-mono text-xs"
             readonly
+            fluid
           />
 
-          <div class="col-span-6 md:col-span-1">
-            <Button
-              label="导入到…"
-              aria-haspopup="true"
-              :aria-controls="`converter-import-menu`"
-              severity="secondary"
-              text
-              fluid
-              raised
-              @click="toggleGsImportMenu"
-            />
-            <TieredMenu
-              ref="gsImportMenuMethods"
-              :id="`converter-import-menu`"
-              :model="gsImportMenuItems"
-              popup
-            />
-          </div>
+          <Button
+            label="导入到…"
+            severity="secondary"
+            outlined
+            aria-haspopup="true"
+            aria-controls="converter-import-menu"
+            @click="toggleGsImportMenu"
+          />
+          <TieredMenu
+            ref="gsImportMenuMethods"
+            id="converter-import-menu"
+            :model="gsImportMenuItems"
+            popup
+          />
         </div>
-      </template>
-    </Card>
+      </section>
+    </div>
 
-    <Dialog v-model:visible="qrCodeDialogOpen" modal header="二维码">
+    <Dialog v-model:visible="qrCodeDialogOpen" modal header="二维码" :style="{ width: '22rem' }">
       <Select
-        class="mb-2"
         v-model="qrCodeDialogSelected"
         :options="qrCodeDialogSelecter"
         optionLabel="name"
         fluid
+        class="mb-4"
       />
-      <Image :src="qrCodeDialogImageURL" />
+      <div class="flex justify-center rounded-lg bg-white p-3">
+        <Image :src="qrCodeDialogImageURL" width="260" alt="订阅二维码" />
+      </div>
     </Dialog>
   </div>
 </template>
@@ -129,7 +153,6 @@ import type { FormSubmitEvent } from '@primevue/forms/form'
 import { type TieredMenuMethods, useToast } from 'primevue'
 import type { MenuItem } from 'primevue/menuitem'
 
-import { type GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
 import { convertFromApiOptions, convertToApiOptions } from '@/converter'
 import type { ConverterOptions } from '@/interfaces'
 import { useConverterStore } from '@/stores/converter'
@@ -141,24 +164,7 @@ defineOptions({
 
 const toast = useToast()
 const converterStore = useConverterStore()
-const menuItems: GlobalTabbarButtonProps[] = [
-  {
-    id: 'back',
-    label: '返回',
-    icon: 'pi pi-arrow-left',
-    hidden: false,
-    href: '/',
-  },
-  {
-    id: 'back-hidden',
-    label: '返回',
-    icon: 'pi pi-arrow-left',
-    hidden: true,
-  },
-]
-const menuSelected = ref<GlobalTabbarButtonProps>(
-  menuItems.find((item) => item.id === 'back-hidden')!,
-)
+
 const initialValues: Ref<ConverterOptions> = ref({
   ...convertFromApiOptions(converterStore.options),
 })
@@ -267,15 +273,25 @@ const toggleGsImportMenu = (event: Event) => {
   if (gsImportMenuMethods.value) gsImportMenuMethods.value.toggle(event)
 }
 
-// 二维码对话框客户端类型监听器
+// 二维码生成器：对话框打开、客户端类型变化或生成链接变化时重新生成
+let qrCodeRequestId = 0
 watch(
-  qrCodeDialogSelected,
+  [qrCodeDialogOpen, qrCodeDialogSelected, () => converterStore.generated],
   async () => {
-    qrCodeDialogImageURL.value = await getQrCodeURL(
+    // 对话框未打开或令牌为空时不生成
+    if (!qrCodeDialogOpen.value || !converterStore.generated) return
+
+    const requestId = ++qrCodeRequestId
+    const imageURL = await getQrCodeURL(
       qrCodeDialogSelected.value.code,
       converterStore.generated,
       '融合订阅',
     )
+
+    // 只应用最后一次请求的结果，避免异步竞态
+    if (requestId === qrCodeRequestId) {
+      qrCodeDialogImageURL.value = imageURL
+    }
   },
   { immediate: true },
 )

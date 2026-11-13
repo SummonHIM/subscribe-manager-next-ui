@@ -110,10 +110,14 @@ export async function fetchGroup(id: number, errorMsg: Ref<string | null>) {
  * @param name 新名称
  * @param toast PrimeVue 消息对象
  */
-export async function changeGroupName(id: number, name: string, toast: ToastServiceMethods) {
+export async function changeGroupName(
+  id: number,
+  name: string,
+  toast: ToastServiceMethods,
+): Promise<boolean> {
   try {
     const applicationStore = useApplicationStore()
-    axios.put(
+    await axios.put(
       `/api/v3/groups/${id}/rename/`,
       { name: name },
       { headers: { 'X-CSRFToken': applicationStore.csrfToken } },
@@ -123,6 +127,7 @@ export async function changeGroupName(id: number, name: string, toast: ToastServ
       summary: '保存成功',
       life: 5000,
     })
+    return true
   } catch (error) {
     const { messages } = parseAPIError<APIGroup>(error)
     if (messages.length) {
@@ -143,7 +148,25 @@ export async function changeGroupName(id: number, name: string, toast: ToastServ
     }
 
     console.error(error)
+    return false
   }
+}
+
+/**
+ * 生成列表查询参数
+ * @param limit 上限
+ * @param offset 偏移
+ * @param search 搜索词
+ */
+function listQuery(limit: number, offset: number, search: string = ''): string {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  })
+
+  if (search.trim()) params.set('search', search.trim())
+
+  return params.toString()
 }
 
 /**
@@ -152,6 +175,7 @@ export async function changeGroupName(id: number, name: string, toast: ToastServ
  * @param limit 上限
  * @param offset 偏移
  * @param toast PrimeVue 消息对象
+ * @param search 搜索词
  * @returns 分组订阅信息
  */
 export async function fetchGroupSubscribes(
@@ -159,10 +183,11 @@ export async function fetchGroupSubscribes(
   limit: number = 10,
   offset: number = 0,
   toast: ToastServiceMethods,
+  search: string = '',
 ) {
   try {
     const response = await axios.get<APIBasicList<APIGroupSubscribes>>(
-      `/api/v3/groups/${groupID}/subscribes/?limit=${limit}&offset=${offset}`,
+      `/api/v3/groups/${groupID}/subscribes/?${listQuery(limit, offset, search)}`,
     )
     return response.data
   } catch (error) {
@@ -486,6 +511,7 @@ export async function reOrderSubscribes(
  * @param limit 上限
  * @param offset 偏移
  * @param toast PrimeVue 消息对象
+ * @param search 搜索词
  * @returns 分组共享账号信息
  */
 export async function fetchGroupShares(
@@ -493,10 +519,11 @@ export async function fetchGroupShares(
   limit: number = 10,
   offset: number = 0,
   toast: ToastServiceMethods,
+  search: string = '',
 ) {
   try {
     const response = await axios.get<APIBasicList<APIGroupShares>>(
-      `/api/v3/groups/${groupID}/shares/?limit=${limit}&offset=${offset}`,
+      `/api/v3/groups/${groupID}/shares/?${listQuery(limit, offset, search)}`,
     )
     return response.data
   } catch (error) {
@@ -739,6 +766,7 @@ export async function reOrderShares(
  * @param limit 上限
  * @param offset 偏移
  * @param toast PrimeVue 消息对象
+ * @param search 搜索词
  * @returns 分组用户信息
  */
 export async function fetchGroupUsers(
@@ -746,10 +774,11 @@ export async function fetchGroupUsers(
   limit: number = 10,
   offset: number = 0,
   toast: ToastServiceMethods,
+  search: string = '',
 ) {
   try {
     const response = await axios.get<APIBasicList<APIGroupUsers>>(
-      `/api/v3/groups/${groupID}/users/?limit=${limit}&offset=${offset}`,
+      `/api/v3/groups/${groupID}/users/?${listQuery(limit, offset, search)}`,
     )
     return response.data
   } catch (error) {

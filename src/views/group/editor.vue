@@ -1,14 +1,42 @@
 <template>
-  <div class="mx-auto pt-8 pb-8 max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[70%]">
-    <GlobalToolbar v-model="menuSelected" :buttons="menuItems" class="mb-2" />
+  <div class="page-container">
+    <header class="flex items-start gap-2 sm:gap-3">
+      <RouterLink
+        :to="`/group/?id=${queryGroupID}`"
+        aria-label="返回"
+        class="-ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+      >
+        <i class="pi pi-arrow-left text-sm"></i>
+      </RouterLink>
+
+      <div class="min-w-0">
+        <h1 class="page-title truncate">{{ group.name }}</h1>
+        <p class="page-subtitle mt-1">双击表格行直接编辑；文本输入框内 Enter 保存、Esc 取消。</p>
+      </div>
+    </header>
 
     <template v-if="group.id > 0">
-      <Card class="mb-2">
-        <template #title>
-          {{ group.name }}
-        </template>
+      <nav class="mt-6 flex gap-6 border-b border-neutral-200 dark:border-neutral-800">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          type="button"
+          class="-mb-px border-b-2 px-0.5 pb-3 text-sm transition-colors"
+          :class="
+            activeTab === tab.id
+              ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
+              : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200'
+          "
+          @click="activeTab = tab.id"
+        >
+          {{ tab.label }}
+        </button>
+      </nav>
 
-        <template #content>
+      <div class="mt-4">
+        <section v-if="activeTab === 'settings'" class="surface-card p-4 sm:p-5">
+          <h2 class="section-title mb-3">分组信息</h2>
+
           <Form
             v-slot="$form"
             :initialValues="groupInitialValues"
@@ -23,44 +51,37 @@
               {{ $form.name.error?.message }}
             </Message>
 
-            <div class="flex justify-end mt-2 gap-2">
+            <div class="mt-3 flex justify-end gap-2">
               <Button label="恢复" severity="secondary" text @click="$form.reset()" />
               <Button type="submit" label="保存" />
             </div>
           </Form>
-        </template>
-      </Card>
+        </section>
 
-      <Card class="mb-2">
-        <template #content>
+        <section v-else-if="activeTab === 'subscribes'" class="surface-card p-4 sm:p-5">
           <GroupSubscribeEditor :group-id="queryGroupID" />
-        </template>
-      </Card>
+        </section>
 
-      <Card class="mb-2">
-        <template #content>
+        <section v-else-if="activeTab === 'shares'" class="surface-card p-4 sm:p-5">
           <GroupShareEditor :group-id="queryGroupID" />
-        </template>
-      </Card>
+        </section>
 
-      <Card class="mb-2">
-        <template #content>
-          <GroupUsersEditor :group-id="queryGroupID" :expire-temp="groupFirstSubExpire" />
-        </template>
-      </Card>
+        <section v-else class="surface-card p-4 sm:p-5">
+          <GroupUsersEditor :group-id="queryGroupID" />
+        </section>
+      </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { type Ref, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { type Ref, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { Form, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
 import { useToast } from 'primevue/usetoast'
 
-import { type GlobalTabbarButtonProps } from '@/components/GlobalToolbar.vue'
-import { changeGroupName, fetchGroup, fetchGroupSubscribesUsage } from '@/groups'
+import { changeGroupName, fetchGroup } from '@/groups'
 import type { APIGroup } from '@/interfaces'
 import { useAPIGroupStore } from '@/stores/groups'
 
@@ -68,32 +89,22 @@ defineOptions({
   name: 'GroupEditorPage',
 })
 
+type TabID = 'subscribes' | 'shares' | 'users' | 'settings'
+
 const route = useRoute()
 const toast = useToast()
-const router = useRouter()
 const apiGroupStore = useAPIGroupStore()
 
 const queryGroupID = Number(route.query.id)
 
-// 菜单
-const menuItems: GlobalTabbarButtonProps[] = [
-  {
-    id: 'back',
-    label: '返回',
-    icon: 'pi pi-arrow-left',
-    hidden: false,
-    href: `/group/?id=${Number(route.query.id)}`,
-  },
-  {
-    id: 'back-hidden',
-    label: '返回',
-    icon: 'pi pi-arrow-left',
-    hidden: true,
-  },
+// 标签页
+const activeTab: Ref<TabID> = ref('settings')
+const tabs: { id: TabID; label: string }[] = [
+  { id: 'settings', label: '分组设置' },
+  { id: 'subscribes', label: '订阅' },
+  { id: 'shares', label: '共享账号' },
+  { id: 'users', label: '用户' },
 ]
-const menuSelected = ref<GlobalTabbarButtonProps>(
-  menuItems.find((item) => item.id === 'back-hidden')!,
-)
 
 // 获取分组信息
 const errorMsg: Ref<string | null> = ref(null)
@@ -105,7 +116,6 @@ const group: APIGroup = tempGroup
 const groupInitialValues = reactive({
   name: group.name,
 })
-const groupFirstSubExpire: Ref<Date | null> = ref(null)
 
 /**
  * 检查是否符合规定
@@ -134,26 +144,17 @@ const groupResolver = ({ values }: FormResolverOptions) => {
  * @param e 事件
  */
 const groupFormSubmit = async (e: FormSubmitEvent) => {
-  if (e.valid) {
-    changeGroupName(queryGroupID, e.values.name, toast)
-    router.go(0)
+  if (!e.valid) return
+
+  const name = e.values.name as string
+  if (await changeGroupName(queryGroupID, name, toast)) {
+    group.name = name
+    groupInitialValues.name = name
   }
 }
 
-onMounted(async () => {
-  // 检查是否为管理员
-  if (!group.myself.admin) {
-    group.id = -1
-  }
-
-  if (group.subscribes.length >= 1) {
-    const firstSub = group.subscribes[0]
-    if (firstSub) {
-      const usage = await fetchGroupSubscribesUsage(group.id, firstSub)
-      if (usage.expire !== null) {
-        groupFirstSubExpire.value = new Date(usage.expire * 1000)
-      }
-    }
-  }
-})
+// 检查是否为管理员
+if (!group.myself.admin) {
+  group.id = -1
+}
 </script>

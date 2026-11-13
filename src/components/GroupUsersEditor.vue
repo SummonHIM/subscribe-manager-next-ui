@@ -5,104 +5,136 @@
     :first="tablePaginatorFirst"
     :totalRecords="groupUsers.count"
     :rowsPerPageOptions="[10, 20, 50, 100]"
+    v-model:editingRows="editingRows"
+    editMode="row"
     @page="onTablePaginatorChange"
-    class="whitespace-nowrap"
+    @row-dblclick="onRowDblClick"
     dataKey="id"
+    size="small"
     paginator
     lazy
+    class="user-table"
   >
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xl">分组用户</span>
-        <Button
-          icon="pi pi-refresh"
-          variant="text"
-          severity="secondary"
-          rounded
-          @click="onRefreshTable"
-        />
+        <span class="section-title">分组用户</span>
+        <div class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          <InputText
+            v-model="search"
+            placeholder="搜索用户名或邮箱"
+            size="small"
+            class="w-full min-w-0 sm:w-52"
+            aria-label="搜索用户"
+          />
+          <div class="ml-auto flex items-center gap-1">
+            <Button
+              icon="pi pi-refresh"
+              variant="text"
+              severity="secondary"
+              rounded
+              class="shrink-0"
+              aria-label="刷新"
+              @click="onRefreshTable"
+            />
+          </div>
+        </div>
       </div>
     </template>
 
-    <!-- <Column field="id" header="ID"></Column> -->
-    <Column field="user" header="用户 ID"></Column>
-    <Column field="username" header="用户名"></Column>
-    <Column field="expire" header="过期日">
+    <Column field="username" header="用户" style="width: 100%">
       <template #body="slotProps">
-        {{ new Date(slotProps.data.expire).toLocaleString() }}
+        <div class="min-w-0">
+          <div class="truncate font-medium text-neutral-900 dark:text-neutral-100">
+            {{ slotProps.data.username }}
+          </div>
+          <div class="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+            ID {{ slotProps.data.user }} ·
+            {{ slotProps.data.admin ? '管理员' : '普通成员' }}
+          </div>
+        </div>
       </template>
     </Column>
-    <Column field="admin" header="管理员">
+    <Column field="expire" header="过期日" style="width: 23rem">
       <template #body="slotProps">
-        {{ slotProps.data.admin ? '是' : '否' }}
+        <span class="block truncate" :title="new Date(slotProps.data.expire).toLocaleString()">
+          {{ new Date(slotProps.data.expire).toLocaleString() }}
+        </span>
       </template>
-    </Column>
-
-    <Column style="min-width: 7rem">
-      <template #body="slotProps">
-        <Button
-          icon="pi pi-pencil"
-          variant="text"
-          rounded
-          class="mr-2"
-          @click="onEditorOpenEdit(slotProps.data)"
-        />
-        <Button
-          icon="pi pi-trash"
-          variant="text"
-          rounded
-          severity="danger"
-          @click="onOpenDeleteDialog(slotProps.data.id)"
-        />
-      </template>
-    </Column>
-  </DataTable>
-
-  <Dialog v-model:visible="editorVisible" modal :style="{ width: '30rem' }">
-    <template #header>
-      <template v-if="editorGroupUserID >= 0"><p class="text-xl">编辑分组用户</p></template>
-      <template v-else><p class="text-xl">新建分组用户</p></template>
-    </template>
-
-    <Form
-      v-slot="$form"
-      :initialValues="editorInitialValues"
-      :resolver="editorResolver"
-      @submit="onEditorSave"
-    >
-      <InputGroup class="mt-2">
-        <FloatLabel variant="on">
+      <template #editor="{ data }">
+        <div class="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
           <DatePicker
-            name="expire"
-            id="gu-editor-expire"
-            v-model="editorExpireModel"
+            :modelValue="new Date(data.expire)"
             dateFormat="yy/mm/dd"
             hourFormat="24"
             showSeconds
             showTime
-            fluid
+            size="small"
+            class="w-full min-w-0 sm:w-48"
+            @update:modelValue="(value) => onExpirePicked(data, value)"
           />
-          <label for="gu-editor-expire">过期日</label>
-        </FloatLabel>
-        <InputGroupAddon>
-          <Button
-            v-if="props.expireTemp"
-            icon="pi pi-calendar-clock"
-            severity="secondary"
-            variant="text"
-            @click="onCopyExpireTemp"
+          <Select
+            v-model="pickedSubscribe"
+            :options="subscribeOptions"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="按订阅设置"
+            size="small"
+            class="w-full min-w-0 sm:w-40"
+            :loading="expireLoading"
+            aria-label="按订阅设置过期日"
+            @change="onApplySubscribeExpire(data)"
           />
-          <Button v-else icon="pi pi-spin pi-spinner" severity="secondary" variant="text" />
-        </InputGroupAddon>
-      </InputGroup>
+        </div>
+      </template>
+    </Column>
 
-      <div class="flex justify-end gap-2 mt-4">
-        <Button label="取消" icon="pi pi-times" text @click="editorVisible = false" />
-        <Button label="恢复" icon="pi pi-refresh" text @click="$form.reset()" />
-        <Button label="保存" icon="pi pi-check" type="submit" />
-      </div>
-    </Form>
-  </Dialog>
+    <Column style="width: 7rem">
+      <template #body="slotProps">
+        <div class="flex items-center justify-center gap-1">
+          <template v-if="isEditing(slotProps.data)">
+            <Button
+              icon="pi pi-check"
+              severity="success"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="保存"
+              @click="saveRow(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-times"
+              severity="secondary"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="取消"
+              @click="cancelRow(slotProps.data)"
+            />
+          </template>
+          <template v-else>
+            <Button
+              icon="pi pi-pencil"
+              severity="secondary"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="编辑过期日"
+              @click="startEdit(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-trash"
+              severity="danger"
+              variant="text"
+              rounded
+              size="small"
+              aria-label="删除分组用户"
+              @click="onOpenDeleteDialog(slotProps.data.id)"
+            />
+          </template>
+        </div>
+      </template>
+    </Column>
+  </DataTable>
 
   <Dialog v-model:visible="deleteVisible" modal :style="{ width: '30rem' }" header="删除确认">
     <p>确定要删除该分组用户吗？</p>
@@ -115,18 +147,27 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, onMounted, ref } from 'vue'
+import { type Ref, onMounted, ref, watch } from 'vue'
 
-import type { FormResolverOptions, FormSubmitEvent } from '@primevue/forms/form'
-import type { DataTablePageEvent } from 'primevue/datatable'
+import type { DataTablePageEvent, DataTableRowDoubleClickEvent } from 'primevue/datatable'
 import { useToast } from 'primevue/usetoast'
 
-import { deleteGroupUser, fetchGroupUsers, modifyGroupUser } from '@/groups'
-import type { APIBasicList, APIGroupUsers, APIGroupUsersEdit } from '@/interfaces'
+import {
+  deleteGroupUser,
+  fetchGroupSubscribes,
+  fetchGroupSubscribesUsage,
+  fetchGroupUsers,
+  modifyGroupUser,
+} from '@/groups'
+import type { APIBasicList, APIGroupUsers } from '@/interfaces'
 
 interface GroupUserEditorProps {
   groupId: number
-  expireTemp: Date | null
+}
+
+interface SubscribeOption {
+  id: number
+  name: string
 }
 
 const toast = useToast()
@@ -139,21 +180,21 @@ const groupUsers: Ref<APIBasicList<APIGroupUsers>> = ref({
   results: [],
 })
 
-// 三十天后
-const thirtyDay = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-thirtyDay.setHours(0, 0, 0, 0)
-
 // 分页
 const tablePaginatorRows = ref(10)
 const tablePaginatorFirst = ref(0)
 
-// 编辑对话框
-const editorVisible = ref(false)
-const editorInitialValues: Ref<APIGroupUsersEdit> = ref({
-  expire: thirtyDay,
-})
-const editorGroupUserID: Ref<number> = ref(-1)
-const editorExpireModel: Ref<Date> = ref(editorInitialValues.value.expire)
+// 搜索
+const search = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+// 行内编辑
+const editingRows: Ref<APIGroupUsers[]> = ref([])
+
+// 订阅过期日快捷填充
+const subscribeOptions: Ref<SubscribeOption[]> = ref([])
+const pickedSubscribe: Ref<number | null> = ref(null)
+const expireLoading = ref(false)
 
 // 删除对话框
 const deleteVisible = ref(false)
@@ -161,61 +202,126 @@ const deleteGroupUserID: Ref<number> = ref(-1)
 
 /** 刷新表格 */
 const onRefreshTable = async () => {
+  editingRows.value = []
   groupUsers.value = await fetchGroupUsers(
     props.groupId,
     tablePaginatorRows.value,
     tablePaginatorFirst.value,
     toast,
+    search.value,
   )
 }
 
-/**
- * 打开修改编辑器
- * @param ga 原分组订阅
- */
-const onEditorOpenEdit = (groupUser: APIGroupUsers) => {
-  editorGroupUserID.value = groupUser.id
-  editorInitialValues.value.expire = groupUser.expire ? new Date(groupUser.expire) : thirtyDay
-  editorExpireModel.value = editorInitialValues.value.expire
-  editorVisible.value = true
-}
+/** 搜索变化（防抖） */
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
 
-/**
- * 检查修改表单是否符合规则
- * @param param0 错误列表
- */
-const editorResolver = ({ values }: FormResolverOptions) => {
-  const errors: Partial<Record<keyof APIGroupUsersEdit, { message: string }[]>> = {}
-
-  if (!values.expire) {
-    errors.expire = [{ message: '过期日格式不正确。' }]
-  } else {
-    // 再转一次 Date
-    const date = new Date(values.expire)
-    if (isNaN(date.getTime())) {
-      errors.expire = [{ message: '过期日格式不正确。' }]
-    }
-  }
-
-  return {
-    values,
-    errors,
-  }
-}
-
-/**
- * 编辑器保存事件
- * @param event 事件
- */
-const onEditorSave = async (event: FormSubmitEvent) => {
-  if (event.valid) {
-    const values = {
-      expire: new Date(event.values.expire),
-    }
-    await modifyGroupUser(props.groupId, editorGroupUserID.value, values, toast)
-
+  searchTimer = setTimeout(async () => {
+    tablePaginatorFirst.value = 0
     await onRefreshTable()
-    editorVisible.value = false
+  }, 300)
+})
+
+// 编辑快照，取消时用于还原
+let editSnapshot: APIGroupUsers | null = null
+
+/**
+ * 该行是否正在编辑
+ * @param row 行数据
+ */
+const isEditing = (row: APIGroupUsers) => {
+  return editingRows.value.some((item) => item.id === row.id)
+}
+
+/**
+ * 开始编辑某一行
+ * @param row 行数据
+ */
+const startEdit = (row: APIGroupUsers) => {
+  // 切换编辑行时，先还原上一行未保存的修改
+  const current = editingRows.value[0]
+  if (current && current.id !== row.id && editSnapshot) {
+    Object.assign(current, editSnapshot)
+  }
+
+  editSnapshot = { ...row }
+  editingRows.value = [row]
+}
+
+/** 双击行进入编辑 */
+const onRowDblClick = (event: DataTableRowDoubleClickEvent) => {
+  const target = event.originalEvent.target as HTMLElement | null
+  if (target?.closest('input, button, textarea, select, a')) return
+
+  if (!isEditing(event.data)) startEdit(event.data)
+}
+
+/**
+ * 保存行内编辑
+ * @param row 正在编辑的行
+ */
+const saveRow = async (row: APIGroupUsers) => {
+  const { id } = row
+
+  await modifyGroupUser(props.groupId, id, { expire: new Date(row.expire) }, toast)
+  editSnapshot = null
+  editingRows.value = editingRows.value.filter((item) => item.id !== id)
+  await onRefreshTable()
+}
+
+/**
+ * 取消行内编辑并还原
+ * @param row 正在编辑的行
+ */
+const cancelRow = (row: APIGroupUsers) => {
+  if (editSnapshot) Object.assign(row, editSnapshot)
+  editSnapshot = null
+  editingRows.value = editingRows.value.filter((item) => item.id !== row.id)
+}
+
+/**
+ * 日期选择器回填
+ * @param row 正在编辑的行
+ * @param value 新日期
+ */
+const onExpirePicked = (
+  row: APIGroupUsers,
+  value: Date | Date[] | (Date | null)[] | null | undefined,
+) => {
+  if (value instanceof Date) {
+    row.expire = value.toISOString()
+  }
+}
+
+/**
+ * 用选中订阅的过期日填充当前行
+ * @param row 正在编辑的行
+ */
+const onApplySubscribeExpire = async (row: APIGroupUsers) => {
+  const subscribeID = pickedSubscribe.value
+  if (!subscribeID) return
+
+  expireLoading.value = true
+  try {
+    const usage = await fetchGroupSubscribesUsage(props.groupId, subscribeID)
+
+    if (usage.expire) {
+      row.expire = new Date(usage.expire * 1000).toISOString()
+      toast.add({
+        severity: 'success',
+        summary: '已按订阅设置过期日',
+        life: 2000,
+      })
+    } else {
+      toast.add({
+        severity: 'warn',
+        summary: '该订阅没有返回过期时间',
+        life: 3000,
+      })
+    }
+  } finally {
+    expireLoading.value = false
+    pickedSubscribe.value = null
   }
 }
 
@@ -243,35 +349,27 @@ const onDeleteConfirm = async () => {
 const onTablePaginatorChange = async (event: DataTablePageEvent) => {
   tablePaginatorRows.value = event.rows
   tablePaginatorFirst.value = event.first
-  groupUsers.value = await fetchGroupUsers(props.groupId, event.rows, event.first, toast)
+  editingRows.value = []
+  groupUsers.value = await fetchGroupUsers(
+    props.groupId,
+    event.rows,
+    event.first,
+    toast,
+    search.value,
+  )
 }
 
-/**
- * 将第一个分组订阅的过期日复制到剪切板中
- */
-const onCopyExpireTemp = async () => {
-  if (props.expireTemp) {
-    try {
-      await navigator.clipboard.writeText(props.expireTemp.toLocaleString())
-      toast.add({
-        severity: 'success',
-        summary: '已成功将分组第一订阅过期日复制到剪切板！',
-        life: 5000,
-      })
-    } catch (error) {
-      console.error(error)
-      toast.add({
-        severity: 'error',
-        summary: '错误',
-        detail: '复制文本时发生错误！',
-        life: 3000,
-      })
-    }
-  }
+/** 加载订阅列表，供“按订阅设置”使用 */
+const loadSubscribeOptions = async () => {
+  const subscribes = await fetchGroupSubscribes(props.groupId, 100, 0, toast)
+  subscribeOptions.value = subscribes.results.map((item) => ({
+    id: item.id,
+    name: item.name,
+  }))
 }
 
-// 获取一遍
+// 初始化
 onMounted(async () => {
-  await onRefreshTable()
+  await Promise.all([onRefreshTable(), loadSubscribeOptions()])
 })
 </script>

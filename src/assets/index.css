@@ -2,3 +2,95 @@
 @import 'primeicons/primeicons.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* 窄屏下的表格适配 */
+@media (max-width: 640px) {
+  /* 拖动排序手柄会溢到正文上 */
+  .p-datatable .p-datatable-reorderable-row-handle {
+    display: none !important;
+  }
+
+  /* 收紧单元格左右内边距，给内容让出宽度 */
+  .p-datatable .p-datatable-thead > tr > th,
+  .p-datatable .p-datatable-tbody > tr > td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* 允许日期选择器与下拉框收缩，避免撑宽单元格 */
+  .p-datepicker .p-datepicker-input,
+  .p-select {
+    min-width: 0 !important;
+  }
+
+  /* 手机端：隐藏表头，每一行折叠成卡片 */
+  .subscribe-table .p-datatable-thead,
+  .share-table .p-datatable-thead,
+  .user-table .p-datatable-thead {
+    display: none;
+  }
+
+  .subscribe-table .p-datatable-tbody > tr,
+  .share-table .p-datatable-tbody > tr,
+  .user-table .p-datatable-tbody > tr {
+    display: block;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .dark .subscribe-table .p-datatable-tbody > tr,
+  .dark .share-table .p-datatable-tbody > tr,
+  .dark .user-table .p-datatable-tbody > tr {
+    border-color: #262626;
+  }
+
+  .subscribe-table .p-datatable-tbody > tr > td,
+  .share-table .p-datatable-tbody > tr > td,
+  .user-table .p-datatable-tbody > tr > td {
+    display: block;
+    width: auto !important;
+    border: 0 !important;
+    padding: 0.125rem 0.5rem !important;
+  }
+
+  /* 拖动排序列在卡片布局下隐藏 */
+  .subscribe-table .p-datatable-tbody > tr > td:first-child,
+  .share-table .p-datatable-tbody > tr > td:first-child {
+    display: none;
+  }
+
+  /* 操作按钮靠卡片右下 */
+  .subscribe-table .p-datatable-tbody > tr > td:last-child,
+  .share-table .p-datatable-tbody > tr > td:last-child,
+  .user-table .p-datatable-tbody > tr > td:last-child {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.375rem !important;
+  }
+}
+
+@layer components {
+  /* 页面统一容器 */
+  .page-container {
+    @apply mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8;
+  }
+
+  /* 卡片表面：白底页面靠细边框和极轻阴影区分层级 */
+  .surface-card {
+    @apply rounded-xl border border-neutral-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none;
+  }
+
+  /* 页面标题与副标题 */
+  .page-title {
+    @apply text-xl font-semibold text-neutral-900 sm:text-2xl dark:text-neutral-100;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-neutral-500 dark:text-neutral-400;
+  }
+
+  /* 章节标题 */
+  .section-title {
+    @apply text-sm font-medium text-neutral-900 dark:text-neutral-100;
+  }
+}

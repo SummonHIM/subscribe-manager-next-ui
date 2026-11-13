@@ -1,127 +1,146 @@
 <template>
-  <Card v-bind="$attrs">
-    <template #title>
-      {{ props.subscribe.name }}
-    </template>
-
-    <template #content>
-      <div class="grid grid-cols-6 items-center gap-4">
-        <FloatLabel variant="on" class="col-span-6 md:col-span-5">
-          <InputText
-            :id="`gs-manage-url-${props.subscribe.id}`"
-            type="text"
-            fluid
-            :value="displayUrl"
-            readonly
-            :placeholder="displayUrl.toString()"
-          />
-          <label :for="`gs-manage-url-${props.subscribe.id}`">订阅链接</label>
-        </FloatLabel>
-
-        <div class="col-span-6 md:col-span-1">
-          <Button
-            label="导入到…"
-            aria-haspopup="true"
-            :aria-controls="`group-subscribe-import-menu-${props.subscribe.id}`"
-            severity="secondary"
-            text
-            fluid
-            raised
-            @click="toggleGsImportMenu"
-          />
-          <TieredMenu
-            ref="gsImportMenuMethods"
-            :id="`group-subscribe-import-menu-${props.subscribe.id}`"
-            :model="gsImportMenuItems"
-            popup
-          />
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <div class="flex justify-between">
-          <p
-            v-if="displayUsage.download && displayUsage.upload && displayUsage.total"
-            class="text-sm font-light"
-          >
-            {{ formatBytes(displayUsage.download + displayUsage.upload) }}
-            /
-            {{ formatBytes(displayUsage.total) }}
-          </p>
-          <p v-if="displayUsage.expire" class="text-sm font-light">
-            {{ new Date(displayUsage.expire * 1000).toLocaleString() }}
-          </p>
-        </div>
-        <ProgressBar
-          v-if="displayUsageMeter"
-          :value="displayUsageMeter"
-          :pt="{
-            root: { style: 'height: .85rem' },
-          }"
+  <div
+    v-bind="$attrs"
+    class="rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm sm:p-5 dark:border-neutral-800 dark:bg-neutral-900"
+  >
+    <!-- 标题行 -->
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex min-w-0 items-center gap-2">
+        <h3 class="truncate text-[15px] font-medium text-neutral-900 dark:text-neutral-100">
+          {{ props.subscribe.name }}
+        </h3>
+        <Tag
+          v-if="props.subscribe.converter"
+          severity="info"
+          value="转换"
+          class="shrink-0 !px-1.5 !py-0 !text-[11px]"
         />
       </div>
 
-      <Card class="mt-6">
-        <template #title><p class="text-base">其他选项</p></template>
-        <template #content>
-          <template v-if="props.subscribe.converter">
-            <Message
-              v-if="alertServerConverterBackend() || alertServerConverterOption()"
-              severity="warn"
-              icon="pi pi-exclamation-circle"
-            >
-              <template v-if="alertServerConverterBackend()">
-                服务器已为该订阅链接设置了自定义转换后端链接：
-                {{ props.subscribe.converter_options?.backend }}
-                。
-              </template>
-              <template v-if="alertServerConverterBackend() && alertServerConverterOption()">
-                <br />
-              </template>
-              <template v-if="alertServerConverterOption()">
-                服务器已为该订阅链接设置如下自定义转换选项：
-                {{ alertServerConverterOption() }}
-                。
-              </template>
-            </Message>
-          </template>
+      <Button
+        label="导入"
+        icon="pi pi-download"
+        size="small"
+        severity="secondary"
+        outlined
+        class="shrink-0"
+        aria-haspopup="true"
+        :aria-controls="`group-subscribe-import-menu-${props.subscribe.id}`"
+        @click="toggleGsImportMenu"
+      />
+      <TieredMenu
+        ref="gsImportMenuMethods"
+        :id="`group-subscribe-import-menu-${props.subscribe.id}`"
+        :model="gsImportMenuItems"
+        popup
+      />
+    </div>
 
-          <div class="sm:flex items-center gap-4 mt-4">
-            <template v-if="props.subscribe.converter">
-              <div class="flex gap-2 mb-3 sm:mb-0">
-                <ToggleSwitch v-model="displayUrlOpenConverter" />
-                <p>使用订阅转换</p>
-              </div>
-            </template>
+    <!-- 订阅链接 -->
+    <div
+      class="mt-3 flex items-center gap-1 rounded-md border border-neutral-200 bg-neutral-50 py-1.5 pr-1 pl-3 dark:border-neutral-700 dark:bg-neutral-950/60"
+    >
+      <span
+        class="min-w-0 flex-1 truncate font-mono text-xs text-neutral-600 dark:text-neutral-300"
+        :title="displayUrlString"
+      >
+        {{ displayUrlString }}
+      </span>
+      <Button
+        icon="pi pi-copy"
+        text
+        rounded
+        size="small"
+        severity="secondary"
+        aria-label="复制订阅链接"
+        @click="copyDisplayUrl"
+      />
+      <Button
+        icon="pi pi-ellipsis-h"
+        text
+        rounded
+        size="small"
+        severity="secondary"
+        aria-label="更多操作"
+        aria-haspopup="true"
+        :aria-controls="`group-subscribe-import-menu-${props.subscribe.id}`"
+        @click="toggleGsImportMenu"
+      />
+    </div>
 
-            <div class="flex gap-2 mb-2 sm:mb-0">
-              <ToggleSwitch v-model="displayOriginUrl" />
-              <p>显示原始订阅</p>
-            </div>
-            <Button
-              v-if="!displayOriginUrl"
-              label="刷新令牌"
-              severity="secondary"
-              variant="text"
-              icon="pi pi-refresh"
-              @click="refreshTokenDialogOpen = true"
-            />
-            <!-- <p class="font-thin">更多选项可导入到订阅转换器中继续编辑！</p> -->
-          </div>
-        </template>
-      </Card>
-    </template>
-  </Card>
+    <!-- 用量与到期 -->
+    <div
+      v-if="displayUsageMeter !== null || displayUsage.expire"
+      class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-neutral-500 dark:text-neutral-400"
+    >
+      <template v-if="displayUsageMeter !== null">
+        <ProgressBar
+          :value="displayUsageMeter"
+          :show-value="false"
+          class="w-36"
+          :pt="{
+            root: { style: 'height: 4px' },
+            value: {
+              class: displayUsageMeter >= 90 ? '!bg-amber-500' : '',
+              style: 'border-radius: 9999px',
+            },
+          }"
+        />
+        <span class="tabular-nums">
+          {{ formatBytes((displayUsage.download ?? 0) + (displayUsage.upload ?? 0)) }}
+          /
+          {{ formatBytes(displayUsage.total) }}
+        </span>
+      </template>
+      <span v-if="displayUsage.expire" class="tabular-nums">
+        {{ new Date(displayUsage.expire * 1000).toLocaleString() }} 到期
+      </span>
+    </div>
 
-  <Dialog v-model:visible="qrCodeDialogOpen" modal header="二维码">
+    <!-- 服务器强制选项提示 -->
+    <p
+      v-if="serverNotice"
+      class="mt-2 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-500"
+    >
+      <i class="pi pi-info-circle mt-px text-[11px]"></i>
+      <span>{{ serverNotice }}</span>
+    </p>
+
+    <!-- 选项 -->
+    <div
+      class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-neutral-600 dark:text-neutral-300"
+    >
+      <label v-if="props.subscribe.converter" class="flex cursor-pointer items-center gap-2">
+        <ToggleSwitch v-model="displayUrlOpenConverter" />
+        <span>使用订阅转换</span>
+      </label>
+      <label class="flex cursor-pointer items-center gap-2">
+        <ToggleSwitch v-model="displayOriginUrl" />
+        <span>显示原始订阅</span>
+      </label>
+      <Button
+        v-if="!displayOriginUrl"
+        label="刷新令牌"
+        icon="pi pi-refresh"
+        text
+        size="small"
+        severity="secondary"
+        @click="refreshTokenDialogOpen = true"
+      />
+    </div>
+  </div>
+
+  <Dialog v-model:visible="qrCodeDialogOpen" modal header="二维码" :style="{ width: '22rem' }">
     <Select
-      class="mb-2"
       v-model="qrCodeDialogSelected"
       :options="qrCodeDialogSelecter"
       optionLabel="name"
       fluid
+      class="mb-4"
     />
-    <Image :src="qrCodeDialogImageURL" />
+    <div class="flex justify-center rounded-lg bg-white p-3">
+      <Image :src="qrCodeDialogImageURL" width="260" alt="订阅二维码" />
+    </div>
   </Dialog>
 
   <Dialog
@@ -131,7 +150,7 @@
     header="刷新令牌确认"
   >
     <p>确定要刷新该订阅链接的令牌吗？</p>
-    <p>刷新后，需要重新导入该订阅链接，才能正常更新！</p>
+    <p class="mt-2">刷新后，需要重新导入该订阅链接，才能正常更新！</p>
 
     <template #footer>
       <Button label="取消" icon="pi pi-times" text @click="refreshTokenDialogOpen = false" />
@@ -141,7 +160,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Ref, onMounted, ref, watch } from 'vue'
+import { type Ref, computed, onMounted, ref, watch } from 'vue'
 
 import axios from 'axios'
 import type { TieredMenuMethods } from 'primevue'
@@ -173,6 +192,7 @@ const props = defineProps<GroupSubscribesProps>()
 // 实际显示的订阅链接
 let tokenCache: string | null = null // 令牌缓存
 const displayUrl: Ref<URL> = ref(new URL(props.subscribe.url)) // 显示在输入框中的订阅链接
+const displayUrlString = computed(() => displayUrl.value.toString())
 const displayOriginUrl: Ref<boolean> = ref(false) // 是否显示原始订阅按钮
 const displayUrlOpenConverter: Ref<boolean> = ref(props.subscribe.converter) // 是否使用订阅转换按钮
 const displayUsage: Ref<APIGroupSubscribesUsage> = ref({
@@ -190,23 +210,8 @@ const menuItemsOriginal: MenuItem[] = [
   // 无转换时的菜单
   {
     label: '剪切板',
-    command: async () => {
-      try {
-        await navigator.clipboard.writeText(displayUrl.value.toString())
-        toast.add({
-          severity: 'success',
-          summary: '复制成功！',
-          life: 2000,
-        })
-      } catch (error) {
-        console.error(error)
-        toast.add({
-          severity: 'error',
-          summary: '错误',
-          detail: '复制文本时发生错误！',
-          life: 2000,
-        })
-      }
+    command: () => {
+      copyDisplayUrl()
     },
   },
 ]
@@ -296,12 +301,28 @@ const qrCodeDialogSelecter = [
   { name: 'Surfboard', code: 'surfboard' },
   { name: 'sing-box', code: 'singbox' },
   { name: 'Quantumult X', code: 'quantumultx' },
-  { name: '纯链接', code: 'pure_url' }
+  { name: '纯链接', code: 'pure_url' },
 ]
 const qrCodeDialogImageURL = ref('') // 生成的二维码图片
 
 // 刷新令牌对话框
 const refreshTokenDialogOpen = ref(false)
+
+// 服务器强制转换选项提示
+const serverNotice = computed(() => {
+  if (!props.subscribe.converter) return ''
+
+  const parts: string[] = []
+  if (alertServerConverterBackend()) {
+    parts.push(`转换后端：${props.subscribe.converter_options?.backend}`)
+  }
+  const option = alertServerConverterOption()
+  if (option) {
+    parts.push(`转换选项：${option}`)
+  }
+
+  return parts.length ? `服务器已强制设置${parts.join('；')}。` : ''
+})
 
 /**
  * 切换导入菜单
@@ -309,6 +330,28 @@ const refreshTokenDialogOpen = ref(false)
  */
 const toggleGsImportMenu = (event: Event) => {
   if (gsImportMenuMethods.value) gsImportMenuMethods.value.toggle(event)
+}
+
+/**
+ * 复制当前显示的订阅链接
+ */
+const copyDisplayUrl = async () => {
+  try {
+    await navigator.clipboard.writeText(displayUrl.value.toString())
+    toast.add({
+      severity: 'success',
+      summary: '已复制订阅链接',
+      life: 2000,
+    })
+  } catch (error) {
+    console.error(error)
+    toast.add({
+      severity: 'error',
+      summary: '错误',
+      detail: '复制文本时发生错误！',
+      life: 2000,
+    })
+  }
 }
 
 /**
@@ -418,15 +461,25 @@ watch(displayUrlOpenConverter, () => {
   genSubscribeURL()
 })
 
-// 二维码对话框客户端类型监听器
+// 二维码生成器：对话框打开、客户端类型变化或订阅链接变化时重新生成
+let qrCodeRequestId = 0
 watch(
-  qrCodeDialogSelected,
+  [qrCodeDialogOpen, qrCodeDialogSelected, displayUrl],
   async () => {
-    qrCodeDialogImageURL.value = await getQrCodeURL(
+    // 对话框未打开时不生成
+    if (!qrCodeDialogOpen.value) return
+
+    const requestId = ++qrCodeRequestId
+    const imageURL = await getQrCodeURL(
       qrCodeDialogSelected.value.code,
       displayUrl.value.toString(),
       props.subscribe.name,
     )
+
+    // 只应用最后一次请求的结果，避免异步竞态
+    if (requestId === qrCodeRequestId) {
+      qrCodeDialogImageURL.value = imageURL
+    }
   },
   { immediate: true },
 )

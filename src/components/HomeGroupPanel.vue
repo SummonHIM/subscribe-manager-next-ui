@@ -1,31 +1,37 @@
 <template>
   <component :is="routerLink ? RouterLink : 'div'" :to="routerLink">
-    <Card :class="[card_class, attrs.class]">
-      <template #content>
-        <div class="flex items-end justify-between gap-3">
-          <div class="flex items-end gap-3 min-w-0 flex-1">
-            <i class="pi pi-users" style="font-size: 25px"></i>
-            <p class="font-bold truncate min-w-0">{{ props.group.name }}</p>
-          </div>
-          <p
-            class="shrink-0"
-            :class="{ 'text-red-500': apiGroupStore.isExpired(props.group.myself.expire) }"
-          >
-            <span class="hidden sm:inline">
-              {{ formatToLocalSystem(props.group.myself.expire) }} 过期
-            </span>
-            <span class="inline sm:hidden">
-              {{ apiGroupStore.isExpired(props.group.myself.expire) ? '已过期' : '' }}
-            </span>
-          </p>
-        </div>
-      </template>
-    </Card>
+    <div :class="['surface-card flex items-center gap-3 p-4 transition-shadow', cardClass]">
+      <span
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+        :class="
+          disabled
+            ? 'bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500'
+            : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
+        "
+      >
+        <i class="pi pi-users text-sm"></i>
+      </span>
+
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          {{ props.group.name }}
+        </p>
+        <p
+          class="mt-0.5 text-xs"
+          :class="
+            expired ? 'text-red-500 dark:text-red-400' : 'text-neutral-500 dark:text-neutral-400'
+          "
+        >
+          {{ formatToLocalSystem(props.group.myself.expire) }} 到期
+        </p>
+      </div>
+
+      <i v-if="!disabled" class="pi pi-angle-right text-neutral-300 dark:text-neutral-600"></i>
+    </div>
   </component>
 </template>
 
 <script setup lang="ts">
-import { useAttrs } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import type { APIGroup } from '@/interfaces'
@@ -35,16 +41,13 @@ interface Props {
   group: APIGroup
 }
 
-const attrs = useAttrs()
 const props = defineProps<Props>()
 const apiGroupStore = useAPIGroupStore()
-const disabled: boolean = props.group.myself.admin
-  ? false
-  : apiGroupStore.isExpired(props.group.myself.expire)
-const card_class: string = disabled
-  ? 'cursor-default bg-stone-100! dark:bg-stone-900!'
-  : 'transition hover:scale-[1.01] active:scale-[1.00] dark:border dark:border-neutral-500!'
-const routerLink = disabled ? '' : `/group/?id=${props.group.id}`
+
+const expired = apiGroupStore.isExpired(props.group.myself.expire, props.group.myself.admin)
+const disabled = !props.group.myself.admin && expired
+const routerLink = disabled ? undefined : `/group/?id=${props.group.id}`
+const cardClass = disabled ? 'opacity-60' : 'hover:shadow-sm'
 
 const formatToLocalSystem = (isoString: string): string => {
   const date = new Date(isoString)

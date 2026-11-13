@@ -9,15 +9,13 @@
         </Suspense>
       </header>
 
-      <main class="flex-1">
+      <main class="flex-1 bg-white dark:bg-neutral-950">
         <Suspense>
           <RouterView />
         </Suspense>
       </main>
 
-      <footer>
-        <GlobalFooter />
-      </footer>
+      <GlobalFooter />
     </div>
   </template>
   <template v-else-if="apiGroupStore.errorMsg !== null">
