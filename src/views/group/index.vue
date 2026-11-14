@@ -130,7 +130,7 @@
           </div>
 
           <template v-else>
-            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
               <GroupShares v-for="share in groupShares.results" :key="share.id" :share="share" />
             </div>
 

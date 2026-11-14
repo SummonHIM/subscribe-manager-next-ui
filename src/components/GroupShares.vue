@@ -7,12 +7,19 @@
       {{ props.share.name }}
     </h3>
 
-    <dl class="mt-3 grid grid-cols-1 gap-y-3">
-      <div v-for="(info, index) in displayInfos" v-show="info.value" :key="index" class="min-w-0">
-        <dt class="text-xs text-neutral-400 dark:text-neutral-500">{{ info.label }}</dt>
-        <dd class="mt-1 flex items-center gap-1">
+    <dl class="mt-2 space-y-1">
+      <div
+        v-for="(info, index) in displayInfos"
+        v-show="info.value"
+        :key="index"
+        class="flex min-w-0 items-center gap-2"
+      >
+        <dt class="w-12 shrink-0 text-xs text-neutral-400 dark:text-neutral-500">
+          {{ info.label }}
+        </dt>
+        <dd class="flex min-w-0 flex-1 items-center gap-0.5">
           <span
-            class="max-w-[18rem] min-w-0 truncate font-mono text-sm text-neutral-700 dark:text-neutral-200"
+            class="min-w-0 flex-1 truncate font-mono text-xs text-neutral-700 dark:text-neutral-200"
             :title="info.type === 'password' && !isPasswordVisible(index) ? '' : (info.value ?? '')"
           >
             {{ valueText(info, index) }}
