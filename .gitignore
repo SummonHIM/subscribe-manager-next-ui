@@ -37,3 +37,6 @@ __screenshots__/
 
 test-results/
 playwright-report/
+
+# Local environment (VITE_ vars are public config, keep .env out of git)
+.env
